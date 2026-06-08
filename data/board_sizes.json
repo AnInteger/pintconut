@@ -1,0 +1,8 @@
+[
+  {"name": "Square Mini", "rows": 14, "cols": 14},
+  {"name": "Square Small", "rows": 21, "cols": 21},
+  {"name": "Square Medium", "rows": 29, "cols": 29},
+  {"name": "Square Large", "rows": 40, "cols": 40},
+  {"name": "Rectangle Small", "rows": 21, "cols": 29},
+  {"name": "Rectangle Large", "rows": 29, "cols": 58}
+]
