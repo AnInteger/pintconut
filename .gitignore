@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.pt
+!FastSAM-s.pt
+training/dataset/
+training/photos/
+training/runs/
+training/auto_label_results/
+training/validation_results/
+models/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+annotated_result.jpg
+tests/fixtures/
