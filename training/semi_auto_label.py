@@ -215,41 +215,47 @@ def process_image(model, image_path, output_images_dir, output_labels_dir):
             f"    [{j}] 面积={c['area_ratio']:.1%}, 矩形度={c['rect_ratio']:.2f}"
         )
 
-    # 显示候选区域
+    # 保存候选区域预览图到文件
     display = _draw_candidates(image, candidates)
-    cv2.imshow("Semi-Auto Label - press 0-9/s/q", display)
+    preview_dir = os.path.join(os.path.dirname(output_images_dir), "..", "label_previews")
+    os.makedirs(preview_dir, exist_ok=True)
+    basename = os.path.splitext(os.path.basename(image_path))[0]
+    preview_path = os.path.join(preview_dir, f"candidates_{basename}.jpg")
+    cv2.imwrite(preview_path, display)
+    print(f"  📷 候选区域预览已保存: {preview_path}")
+    print(f"  请查看预览图，输入编号 (0-{len(candidates)-1})，或 s 跳过，q 退出:")
 
+    # 终端输入模式
     while True:
-        key = cv2.waitKey(0) & 0xFF
-
-        if key == ord("q"):
-            cv2.destroyAllWindows()
+        try:
+            user_input = input("  > ").strip().lower()
+        except EOFError:
             return "quit"
 
-        if key == ord("s"):
+        if user_input == "q":
+            return "quit"
+
+        if user_input == "s":
             print("  跳过")
-            cv2.destroyAllWindows()
             return "skipped"
 
-        if ord("0") <= key <= ord("9"):
-            idx = key - ord("0")
+        if user_input.isdigit():
+            idx = int(user_input)
             if idx < len(candidates):
                 selected = candidates[idx]
                 print(
-                    f"  选中 [{idx}]: 面积={selected['area_ratio']:.1%}, "
+                    f"  ✅ 选中 [{idx}]: 面积={selected['area_ratio']:.1%}, "
                     f"矩形度={selected['rect_ratio']:.2f}"
                 )
                 _save_label(
                     selected["mask"], image_path,
                     output_images_dir, output_labels_dir, w, h,
                 )
-                cv2.destroyAllWindows()
                 return "saved"
             else:
                 print(f"  [{idx}] 不在范围内 (0-{len(candidates) - 1})")
-
-    cv2.destroyAllWindows()
-    return "skipped"
+        else:
+            print(f"  无效输入，请输入 0-{len(candidates)-1}、s 或 q")
 
 
 def main():

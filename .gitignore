@@ -1,20 +1,53 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# PyTorch model weights (keep FastSAM-s.pt for labeling)
 *.pt
 !FastSAM-s.pt
+
+# Training outputs
 training/dataset/
 training/photos/
 training/runs/
 training/auto_label_results/
 training/validation_results/
+training/label_previews/
 models/
-*.egg-info/
-dist/
-build/
+
+# Test artifacts
 .pytest_cache/
-annotated_result.jpg
 tests/fixtures/
+
 # Gradio
 flagged/
 .gradio/
+
+# Output
+annotated_result.jpg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright MCP snapshots
+.playwright-mcp/
+
+# Superpowers brainstorming
+.superpowers/
