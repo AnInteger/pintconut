@@ -15,3 +15,6 @@ build/
 .pytest_cache/
 annotated_result.jpg
 tests/fixtures/
+# Gradio
+flagged/
+.gradio/
