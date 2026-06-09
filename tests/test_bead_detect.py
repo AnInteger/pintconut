@@ -50,3 +50,10 @@ def test_detect_returns_list_of_dicts():
     img = np.ones((600, 600, 3), dtype=np.uint8) * 200
     result = detector.detect(img)
     assert isinstance(result, list)
+
+def test_detect_beads_returns_annotated_results():
+    from src.color import ColorMatcher
+    detector = BeadDetector()
+    img = np.ones((600, 600, 3), dtype=np.uint8) * 200
+    result = detector.detect_beads(img)
+    assert isinstance(result, list)

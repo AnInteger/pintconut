@@ -105,3 +105,46 @@ class BeadDetector:
             filtered = filtered_masked
 
         return filtered
+
+    def detect_beads(
+        self,
+        img: np.ndarray,
+        color_matcher = None,
+        board_mask: np.ndarray | None = None,
+        size_range: tuple[float, float] = (0.3, 3.0),
+    ) -> list[dict]:
+        """High-level pipeline: detect beads, filter, and optionally match colors.
+
+        Args:
+            img: Input image in BGR format
+            color_matcher: Optional ColorMatcher instance for color classification
+            board_mask: Optional binary mask for filtering boxes to board region
+            size_range: Size filter range (min_ratio, max_ratio) relative to median
+
+        Returns:
+            List of bead dictionaries with detection + color info
+        """
+        # Step 1: Get raw detections
+        boxes = self.detect(img)
+
+        if not boxes:
+            return []
+
+        # Step 2: Estimate reference size from median box width
+        ref_size = np.median([b["width"] for b in boxes])
+
+        # Step 3: Filter boxes
+        filtered = self.filter_boxes(
+            boxes,
+            ref_size=ref_size,
+            size_range=size_range,
+            board_mask=board_mask,
+        )
+
+        # Step 4: Add color information if color_matcher provided
+        if color_matcher is not None:
+            for box in filtered:
+                color_info = color_matcher.match_box(img, box)
+                box.update(color_info)
+
+        return filtered
