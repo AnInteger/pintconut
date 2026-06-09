@@ -1,4 +1,4 @@
-"""Gradio web UI for bead board labeling — strict wizard flow."""
+"""Gradio web UI for bead board labeling — wizard flow with auto-advancing tabs."""
 
 import os
 import shutil
@@ -83,7 +83,7 @@ def _handle_upload(files):
         if img is not None:
             previews.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     total = len(_list_photos())
-    return f"✅ 已上传 {count} 张照片（共 {total} 张）", previews
+    return f"✅ 已上传 {count} 张照片（共 {total} 张）\n\n👉 点击上方「② 自动分割」标签继续", previews
 
 
 # ---------------------------------------------------------------------------
@@ -109,12 +109,13 @@ def _handle_segment(progress=gr.Progress()):
         vis = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
         annotated.append(vis)
 
-    # Store candidate data in sidecar for Step 3 use
+    # Store candidate data for Step 3
     _store_segmentation_results(photos, model)
 
     msg = f"✅ 已分割 {len(annotated)} 张照片"
     if len(annotated) < n:
         msg += f"（{n - len(annotated)} 张无法读取）"
+    msg += "\n\n👉 点击上方「③ 标注确认」标签继续"
     return annotated, msg
 
 
@@ -187,9 +188,11 @@ def _build_thumbnails_html() -> str:
 # Step 3 — Review / Annotate
 # ---------------------------------------------------------------------------
 def _load_review_image(index: int) -> tuple:
-    """Load image for review. Returns flat tuple of 16 values for Gradio outputs."""
+    """Load image for review. Returns flat tuple of 15 values for Gradio outputs:
+    (image, info_md, progress_md, index, *10 btn_updates, thumbnails_md)
+    """
     photos = _list_photos()
-    empty_btns = [gr.Button(visible=False, value="") for _ in range(10)]
+    empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
 
     if not photos:
         return (None, "没有照片", "进度：0 已标注，0 跳过，共 0 张", 0, *empty_btns, "")
@@ -212,9 +215,9 @@ def _load_review_image(index: int) -> tuple:
     for ci in range(10):
         if ci < len(candidates):
             area_pct = f"{candidates[ci]['area_ratio'] * 100:.1f}%"
-            btn_updates.append(gr.Button(value=f"#{ci} 面积 {area_pct}", visible=True))
+            btn_updates.append(gr.update(value=f"#{ci} 面积 {area_pct}", visible=True))
         else:
-            btn_updates.append(gr.Button(visible=False, value=""))
+            btn_updates.append(gr.update(visible=False, value=""))
 
     return (vis_rgb, info, progress_text, index, *btn_updates, _build_thumbnails_html())
 
@@ -248,8 +251,10 @@ def _handle_select_candidate(img_index: int, cand_index: int):
     next_idx = _find_next_unprocessed(img_path)
     if next_idx < 0:
         labeled, skipped, total = _get_annotation_progress()
-        empty_btns = [gr.Button(visible=False, value="") for _ in range(10)]
-        return (None, "🎉 全部处理完成！", f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张", img_index, *empty_btns, _build_thumbnails_html())
+        empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
+        return (None, "🎉 全部处理完成！请点击上方「④ 导出数据集」标签继续",
+                f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
+                img_index, *empty_btns, _build_thumbnails_html())
 
     return _load_review_image(next_idx)
 
@@ -265,8 +270,10 @@ def _handle_skip_photo(img_index: int):
     next_idx = _find_next_unprocessed(img_path)
     if next_idx < 0:
         labeled, skipped, total = _get_annotation_progress()
-        empty_btns = [gr.Button(visible=False, value="") for _ in range(10)]
-        return (None, "🎉 全部处理完成！", f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张", img_index, *empty_btns, _build_thumbnails_html())
+        empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
+        return (None, "🎉 全部处理完成！请点击上方「④ 导出数据集」标签继续",
+                f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
+                img_index, *empty_btns, _build_thumbnails_html())
 
     return _load_review_image(next_idx)
 
@@ -307,31 +314,19 @@ def _handle_export():
 
 
 # ---------------------------------------------------------------------------
-# Progress bar helpers
+# JS helper to switch Gradio tab by index (0-based)
 # ---------------------------------------------------------------------------
-def _progress_md(step: int) -> str:
-    steps = ["上传照片", "自动分割", "标注确认", "导出数据集"]
-    parts = []
-    for i, label in enumerate(steps, 1):
-        num = ["①", "②", "③", "④"][i - 1]
-        if i < step:
-            parts.append(f"{num} ~~{label}~~ ✅")
-        elif i == step:
-            parts.append(f"**{num} {label}** ◀")
-        else:
-            parts.append(f"{num} {label}")
-    return "  ━━  ".join(parts)
 
 
-def _go_to_step(target_step: int):
-    vis = [target_step == i for i in range(1, 5)]
-    return (
-        gr.Column(visible=vis[0]),
-        gr.Column(visible=vis[1]),
-        gr.Column(visible=vis[2]),
-        gr.Column(visible=vis[3]),
-        _progress_md(target_step),
-    )
+def _js_goto_tab(idx: int) -> str:
+    """Return JS snippet that clicks the Nth tab (0-based) and returns empty string for dummy output."""
+    return f"""
+    () => {{
+        const tabs = document.querySelectorAll('button[role="tab"]');
+        if (tabs[{idx}]) tabs[{idx}].click();
+        return [""];
+    }}
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -340,96 +335,101 @@ def _go_to_step(target_step: int):
 def build_ui() -> gr.Blocks:
     with gr.Blocks(title="Pintconut 拼豆标注工具") as app:
         gr.Markdown("# 🫘 Pintconut 拼豆标注工具")
-        progress_bar = gr.Markdown(_progress_md(1))
 
-        # --- Step 1: Upload ---
-        with gr.Column(visible=True) as step1_col:
-            gr.Markdown("### ① 上传照片\n上传拼板照片，用于训练拼板检测模型。")
-            file_input = gr.File(label="选择照片（支持多选）", file_count="multiple", file_types=["image"])
-            upload_btn = gr.Button("📤 上传", variant="primary")
-            upload_status = gr.Textbox(label="状态", interactive=False, lines=2)
-            upload_gallery = gr.Gallery(label="已上传照片", columns=6, height="auto")
-            upload_btn.click(
-                fn=_handle_upload,
-                inputs=[file_input],
-                outputs=[upload_status, upload_gallery],
-            )
-            nav_next_1 = gr.Button("下一步 →", variant="primary")
+        # Hidden textbox used as dummy output for JS-only navigation buttons
+        _nav_dummy = gr.Textbox(visible=False)
 
-        # --- Step 2: Segment ---
-        with gr.Column(visible=False) as step2_col:
-            gr.Markdown("### ② 自动分割\nFastSAM 将自动识别每张照片中的候选区域。")
-            segment_btn = gr.Button("🔍 开始分割", variant="primary")
-            segment_gallery = gr.Gallery(label="分割结果", columns=3, height="auto")
-            segment_status = gr.Textbox(label="状态", interactive=False)
-            segment_btn.click(
-                fn=_handle_segment,
-                inputs=[],
-                outputs=[segment_gallery, segment_status],
-            )
-            with gr.Row():
-                nav_prev_2 = gr.Button("← 上一步")
+        with gr.Tabs():
+            # ==== Tab 1: Upload ====
+            with gr.Tab("① 上传照片"):
+                gr.Markdown("上传拼板照片，用于训练拼板检测模型。")
+                file_input = gr.File(label="选择照片（支持多选）", file_count="multiple", file_types=["image"])
+                upload_btn = gr.Button("📤 上传", variant="primary")
+                upload_status = gr.Textbox(label="状态", interactive=False, lines=3)
+                upload_gallery = gr.Gallery(label="已上传照片", columns=6, height="auto")
+                nav_next_1 = gr.Button("下一步 →", variant="primary")
+
+                upload_btn.click(
+                    fn=_handle_upload,
+                    inputs=[file_input],
+                    outputs=[upload_status, upload_gallery],
+                )
+                nav_next_1.click(
+                    fn=lambda: "",
+                    js=_js_goto_tab(1),
+                    outputs=[_nav_dummy],
+                )
+
+            # ==== Tab 2: Segment ====
+            with gr.Tab("② 自动分割"):
+                gr.Markdown("FastSAM 将自动识别每张照片中的候选区域。")
+                segment_btn = gr.Button("🔍 开始分割", variant="primary")
+                segment_gallery = gr.Gallery(label="分割结果", columns=3, height="auto")
+                segment_status = gr.Textbox(label="状态", interactive=False, lines=3)
+
+                segment_btn.click(
+                    fn=_handle_segment,
+                    inputs=[],
+                    outputs=[segment_gallery, segment_status],
+                )
+
                 nav_next_2 = gr.Button("下一步 →", variant="primary")
 
-        # --- Step 3: Annotate ---
-        with gr.Column(visible=False) as step3_col:
-            gr.Markdown(
-                "### ③ 标注确认\n"
-                "FastSAM 自动识别了多个区域，你需要选出**哪个区域是拼板**。\n"
-                "选中的结果将作为训练数据，教会 AI 自动识别拼板位置。"
-            )
-            annotate_progress = gr.Markdown("进度：0 已标注，0 跳过，共 0 张")
-            thumbnail_strip = gr.Markdown("")
+            # ==== Tab 3: Annotate ====
+            with gr.Tab("③ 标注确认"):
+                gr.Markdown(
+                    "FastSAM 自动识别了多个区域，你需要选出**哪个区域是拼板**。\n"
+                    "选中的结果将作为训练数据，教会 AI 自动识别拼板位置。"
+                )
+                annotate_progress = gr.Markdown("进度：0 已标注，0 跳过，共 0 张")
+                thumbnail_strip = gr.Markdown("")
 
-            with gr.Row():
-                with gr.Column(scale=1):
-                    annotate_info = gr.Markdown("📷 选择照片开始标注")
-                    review_image = gr.Image(label="当前照片", type="numpy", height=400)
-                with gr.Column(scale=1):
-                    gr.Markdown("**候选区域**（点击选择拼板所在的区域）")
-                    cand_buttons = []
-                    for ci in range(10):
-                        btn = gr.Button(f"候选 {ci}", visible=False)
-                        cand_buttons.append(btn)
-                    gr.Markdown("---")
-                    skip_btn = gr.Button("⏭️ 跳过这张", variant="secondary")
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        annotate_info = gr.Markdown("📷 点击下方「开始标注」加载第一张照片")
+                        review_image = gr.Image(label="当前照片", type="numpy", height=400)
+                    with gr.Column(scale=1):
+                        gr.Markdown("**候选区域**（点击选择拼板所在的区域）")
+                        cand_buttons = []
+                        for ci in range(10):
+                            btn = gr.Button(f"候选 {ci}", visible=False)
+                            cand_buttons.append(btn)
+                        gr.Markdown("---")
+                        skip_btn = gr.Button("⏭️ 跳过这张", variant="secondary")
 
-            annotate_current_idx = gr.State(value=0)
+                annotate_current_idx = gr.State(value=0)
 
-        # --- Step 4: Export ---
-        with gr.Column(visible=False) as step4_col:
-            gr.Markdown("### ④ 导出数据集\n生成 YOLO 格式数据集，用于训练模型。")
-            export_btn = gr.Button("📦 导出数据集", variant="primary")
-            export_status = gr.Textbox(label="数据集报告", interactive=False, lines=12)
-            export_btn.click(fn=_handle_export, inputs=[], outputs=[export_status])
-            with gr.Row():
-                nav_prev_4 = gr.Button("← 上一步")
-                nav_finish = gr.Button("完成 ✅", variant="primary")
+                init_annotate_btn = gr.Button("▶ 开始标注", variant="primary")
 
-        # ===== Navigation wiring =====
-        nav_outputs = [step1_col, step2_col, step3_col, step4_col, progress_bar]
+            # ==== Tab 4: Export ====
+            with gr.Tab("④ 导出数据集"):
+                gr.Markdown("生成 YOLO 格式数据集，用于训练模型。")
+                export_btn = gr.Button("📦 导出数据集", variant="primary")
+                export_status = gr.Textbox(label="数据集报告", interactive=False, lines=12)
+                export_btn.click(fn=_handle_export, inputs=[], outputs=[export_status])
 
-        # Step 1 -> Step 2
-        nav_next_1.click(fn=lambda: _go_to_step(2), inputs=[], outputs=nav_outputs)
+        # ===== Wiring =====
 
-        # Step 2 -> Step 1
-        nav_prev_2.click(fn=lambda: _go_to_step(1), inputs=[], outputs=nav_outputs)
+        # Step 2 → Step 3: init annotation state + load first image + switch tab
+        step3_outputs = [review_image, annotate_info, annotate_progress,
+                         annotate_current_idx] + cand_buttons + [thumbnail_strip]
 
-        # Step 2 -> Step 3: init annotation state + load first image
         def _enter_step3():
             _init_annotation_state()
-            photos = _list_photos()
-            step_vis = _go_to_step(3)
-            if not photos:
-                return step_vis + _load_review_image(0)
-            return step_vis + _load_review_image(0)
-
-        step3_review_outputs = [review_image, annotate_info, annotate_progress, annotate_current_idx] + cand_buttons + [thumbnail_strip]
+            return _load_review_image(0)
 
         nav_next_2.click(
             fn=_enter_step3,
             inputs=[],
-            outputs=nav_outputs + step3_review_outputs,
+            outputs=step3_outputs,
+            js=_js_goto_tab(2),
+        )
+
+        # "开始标注" button also loads first image (stays on same tab)
+        init_annotate_btn.click(
+            fn=_enter_step3,
+            inputs=[],
+            outputs=step3_outputs,
         )
 
         # Candidate button clicks
@@ -441,20 +441,15 @@ def build_ui() -> gr.Blocks:
             btn.click(
                 fn=_make_handler(ci),
                 inputs=[annotate_current_idx],
-                outputs=step3_review_outputs,
+                outputs=step3_outputs,
             )
 
         # Skip button
         skip_btn.click(
             fn=lambda idx: _handle_skip_photo(int(idx)),
             inputs=[annotate_current_idx],
-            outputs=step3_review_outputs,
+            outputs=step3_outputs,
         )
-
-        # Step 4 -> Step 3
-        nav_prev_4.click(fn=lambda: _go_to_step(3), inputs=[], outputs=nav_outputs)
-        # Finish -> back to step 1
-        nav_finish.click(fn=lambda: _go_to_step(1), inputs=[], outputs=nav_outputs)
 
     return app
 
