@@ -148,3 +148,27 @@ class BeadDetector:
                 box.update(color_info)
 
         return filtered
+
+    @staticmethod
+    def count_beads(beads: list[dict]) -> dict:
+        """Count beads by color, filtering out non-bead detections.
+
+        Args:
+            beads: List of bead dictionaries from detect_beads()
+
+        Returns:
+            Dictionary with 'total' count and 'by_color' breakdown
+        """
+        # Filter to only actual beads
+        actual_beads = [b for b in beads if b.get("is_bead", True)]
+
+        # Count by color
+        by_color = {}
+        for bead in actual_beads:
+            color = bead.get("color_name", "Unknown")
+            by_color[color] = by_color.get(color, 0) + 1
+
+        return {
+            "total": len(actual_beads),
+            "by_color": by_color,
+        }

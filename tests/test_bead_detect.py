@@ -57,3 +57,17 @@ def test_detect_beads_returns_annotated_results():
     img = np.ones((600, 600, 3), dtype=np.uint8) * 200
     result = detector.detect_beads(img)
     assert isinstance(result, list)
+
+def test_count_beads_by_color():
+    detector = BeadDetector()
+    beads = [
+        {"color_name": "Red", "is_bead": True, "conf": 0.9, "cx": 10, "cy": 10},
+        {"color_name": "Red", "is_bead": True, "conf": 0.8, "cx": 20, "cy": 20},
+        {"color_name": "Blue", "is_bead": True, "conf": 0.9, "cx": 30, "cy": 30},
+        {"color_name": "White", "is_bead": False, "conf": 0.7, "cx": 40, "cy": 40},
+    ]
+    counts = detector.count_beads(beads)
+    assert counts["total"] == 3
+    assert counts["by_color"]["Red"] == 2
+    assert counts["by_color"]["Blue"] == 1
+    assert "White" not in counts["by_color"]
