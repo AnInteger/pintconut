@@ -58,3 +58,52 @@ class ColorMatcher:
             for c in range(cols):
                 result[r, c] = self.match(rgb_grid[r, c].tolist())
         return result
+
+    def match_box(
+        self, img: np.ndarray, box: dict, sample_fraction: float = 0.4
+    ) -> dict:
+        """Extract color from a bounding box region and match to palette.
+
+        Args:
+            img: Input image in BGR format (OpenCV format)
+            box: Dictionary with 'xyxy' key [x1, y1, x2, y2]
+            sample_fraction: Fraction of box to sample from center (default 0.4 = 40%)
+
+        Returns:
+            Dictionary with color_name, rgb, is_bead, confidence
+        """
+        x1, y1, x2, y2 = box["xyxy"]
+
+        # Calculate the center region to sample
+        box_width = x2 - x1
+        box_height = y2 - y1
+        sample_w = int(box_width * sample_fraction)
+        sample_h = int(box_height * sample_fraction)
+
+        # Calculate center region coordinates
+        cx = (x1 + x2) // 2
+        cy = (y1 + y2) // 2
+        sx1 = max(cx - sample_w // 2, x1)
+        sy1 = max(cy - sample_h // 2, y1)
+        sx2 = min(cx + sample_w // 2, x2)
+        sy2 = min(cy + sample_h // 2, y2)
+
+        # Extract the center region (BGR format)
+        crop_bgr = img[sy1:sy2, sx1:sx2]
+
+        # Convert BGR to RGB for ColorMatcher
+        crop_rgb = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB)
+
+        # Compute median color
+        median_rgb = np.median(crop_rgb.reshape(-1, 3), axis=0).astype(int).tolist()
+
+        # Match to palette and check if it's a bead
+        color_info = self.match(median_rgb)
+        is_bead = self.is_bead(median_rgb)
+
+        return {
+            "color_name": color_info["name"],
+            "rgb": median_rgb,
+            "is_bead": is_bead,
+            "confidence": box.get("conf", 0.0),
+        }

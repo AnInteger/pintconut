@@ -48,3 +48,22 @@ def test_is_bead_dark_color():
     matcher = ColorMatcher("data/colors.json")
     assert matcher.is_bead([0, 0, 0]) is True
     assert matcher.is_bead([64, 64, 64]) is True
+
+def test_match_box_returns_color_info():
+    matcher = ColorMatcher("data/colors.json")
+    # Create a 100x100 BGR image with a red region
+    img = np.zeros((100, 100, 3), dtype=np.uint8)
+    img[30:70, 30:70] = [0, 0, 255]  # Red in BGR
+    box = {"xyxy": [30, 30, 70, 70], "conf": 0.9}
+    result = matcher.match_box(img, box, sample_fraction=0.4)
+    assert result["color_name"] == "Red"
+    assert result["is_bead"] is True
+    assert "rgb" in result
+    assert "confidence" in result
+
+def test_match_box_empty_board():
+    matcher = ColorMatcher("data/colors.json")
+    img = np.ones((100, 100, 3), dtype=np.uint8) * 250  # Near-white in BGR
+    box = {"xyxy": [10, 10, 50, 50], "conf": 0.9}
+    result = matcher.match_box(img, box, sample_fraction=0.4)
+    assert result["is_bead"] is False
