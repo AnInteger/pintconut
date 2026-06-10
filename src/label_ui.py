@@ -223,9 +223,9 @@ def _step3(image, info, progress, index, btn_updates, thumbnails,
            confirm=False, reselect=False, export=False):
     """Build a flat 18-element tuple for step3_outputs."""
     return (image, info, progress, index, *btn_updates, thumbnails,
-            gr.update(visible=confirm, interactive=confirm),
-            gr.update(visible=reselect, interactive=reselect),
-            gr.update(visible=export, interactive=export))
+            gr.update(interactive=confirm),
+            gr.update(interactive=reselect),
+            gr.update(interactive=export))
 
 
 # ---------------------------------------------------------------------------
@@ -428,7 +428,7 @@ def _js_goto_tab(idx: int) -> str:
 # Build UI
 # ---------------------------------------------------------------------------
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="Pintconut 拼豆标注工具", css=_build_button_css()) as app:
+    with gr.Blocks(title="Pintconut 拼豆标注工具") as app:
         gr.Markdown("# 🫘 Pintconut 拼豆标注工具")
 
         # Hidden textbox used as dummy output for JS-only navigation buttons
@@ -491,13 +491,13 @@ def build_ui() -> gr.Blocks:
                             cand_buttons.append(btn)
                         gr.Markdown("---")
                         skip_btn = gr.Button("⏭️ 跳过这张", variant="secondary")
-                        confirm_btn = gr.Button("✅ 确认，下一张", variant="primary", visible=False)
-                        reselect_btn = gr.Button("↩️ 重新选择", variant="secondary", visible=False)
+                        confirm_btn = gr.Button("✅ 确认，下一张", variant="primary", interactive=False)
+                        reselect_btn = gr.Button("↩️ 重新选择", variant="secondary", interactive=False)
 
                 annotate_current_idx = gr.State(value=0)
 
                 init_annotate_btn = gr.Button("▶ 开始标注", variant="primary")
-                complete_export_btn = gr.Button("📦 导出数据集", variant="primary", visible=False)
+                complete_export_btn = gr.Button("📦 导出数据集", variant="primary", interactive=False)
 
             # ==== Tab 4: Export ====
             with gr.Tab("④ 导出数据集"):
@@ -577,4 +577,4 @@ def build_ui() -> gr.Blocks:
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     app = build_ui()
-    app.launch(share=False)
+    app.launch(share=False, css=_build_button_css())
