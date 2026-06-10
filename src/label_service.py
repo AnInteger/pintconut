@@ -4,9 +4,18 @@ import shutil
 import cv2
 import numpy as np
 
+# BGR colors for candidate overlay — fully saturated, maximally separated
 COLORS = [
-    (0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255),
-    (255, 0, 255), (128, 255, 0), (0, 128, 255), (255, 128, 0), (128, 0, 255),
+    (0, 0, 255),     # 0: Red
+    (255, 0, 0),     # 1: Blue
+    (0, 255, 0),     # 2: Green
+    (0, 255, 255),   # 3: Yellow
+    (255, 0, 255),   # 4: Magenta
+    (255, 255, 0),   # 5: Cyan
+    (0, 165, 255),   # 6: Orange
+    (180, 0, 255),   # 7: Pink
+    (0, 230, 150),   # 8: Teal
+    (0, 80, 140),    # 9: Brown
 ]
 
 
@@ -74,7 +83,7 @@ def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
         mask = cand["mask"]
         overlay = display.copy()
         overlay[mask > 0] = color
-        cv2.addWeighted(overlay, 0.35, display, 0.65, 0, display)
+        cv2.addWeighted(overlay, 0.5, display, 0.5, 0, display)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(display, contours, -1, color, 2)
         if contours:

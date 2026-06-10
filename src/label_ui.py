@@ -26,8 +26,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHOTOS_DIR = os.path.join(BASE_DIR, "training", "photos")
 DATASET_DIR = os.path.join(BASE_DIR, "training", "dataset")
 
-# Emojis matching COLORS order in label_service.py
-COLOR_EMOJIS = ["🟢", "🔴", "🔵", "🟡", "🟦", "🟣", "🟩", "🔶", "🟠", "🟤"]
+# Emojis matching COLORS order in label_service.py (BGR → display color → emoji)
+COLOR_EMOJIS = ["🔴", "🔵", "🟢", "🟡", "🟣", "🩵", "🟠", "💗", "🟩", "🟤"]
 
 
 # ---------------------------------------------------------------------------
