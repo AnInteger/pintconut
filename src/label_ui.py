@@ -25,6 +25,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHOTOS_DIR = os.path.join(BASE_DIR, "training", "photos")
 DATASET_DIR = os.path.join(BASE_DIR, "training", "dataset")
 
+# Emojis matching COLORS order in label_service.py
+COLOR_EMOJIS = ["🟢", "🔴", "🔵", "🟡", "🟦", "🟣", "🟩", "🔶", "🟠", "🟤"]
+
 
 # ---------------------------------------------------------------------------
 # Lazy-loaded FastSAM model (singleton)
@@ -215,7 +218,8 @@ def _load_review_image(index: int) -> tuple:
     for ci in range(10):
         if ci < len(candidates):
             area_pct = f"{candidates[ci]['area_ratio'] * 100:.1f}%"
-            btn_updates.append(gr.update(value=f"#{ci} 面积 {area_pct}", visible=True))
+            emoji = COLOR_EMOJIS[ci % len(COLOR_EMOJIS)]
+            btn_updates.append(gr.update(value=f"{emoji} #{ci} 面积 {area_pct}", visible=True))
         else:
             btn_updates.append(gr.update(visible=False, value=""))
 
