@@ -26,8 +26,38 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHOTOS_DIR = os.path.join(BASE_DIR, "training", "photos")
 DATASET_DIR = os.path.join(BASE_DIR, "training", "dataset")
 
-# Emojis matching COLORS order in label_service.py (BGR → display color → emoji)
-COLOR_EMOJIS = ["🔴", "🔵", "🟢", "🟡", "🟣", "🩵", "🟠", "💗", "🟩", "🟤"]
+# CSS hex colors matching COLORS order in label_service.py
+# COLORS are BGR; we convert to RGB hex for CSS
+BUTTON_COLORS = [
+    "#FF0000",  # 0: Red     BGR(0,0,255)
+    "#FF9900",  # 1: Orange  BGR(0,153,255)
+    "#CCFF00",  # 2: Lime    BGR(0,255,204)
+    "#33FF00",  # 3: Green   BGR(0,255,51)
+    "#00FF66",  # 4: Spring  BGR(102,255,0)
+    "#00FFFF",  # 5: Cyan    BGR(255,255,0)
+    "#0066FF",  # 6: Azure   BGR(255,102,0)
+    "#3300FF",  # 7: Blue    BGR(255,0,51)
+    "#CC00FF",  # 8: Purple  BGR(255,0,204)
+    "#FF0099",  # 9: Rose    BGR(153,0,255)
+]
+# Light-colored buttons need dark text instead of white
+_LIGHT_BG_INDICES = {1, 2, 3, 4, 5}  # Orange, Lime, Green, Spring, Cyan
+
+
+def _build_button_css() -> str:
+    """Generate CSS rules for colored candidate buttons."""
+    rules = []
+    for i, color in enumerate(BUTTON_COLORS):
+        text_color = "#333333" if i in _LIGHT_BG_INDICES else "white"
+        rules.append(
+            f"#cand-btn-{i} {{ "
+            f"background-color: {color} !important; "
+            f"color: {text_color} !important; "
+            f"font-weight: bold !important; "
+            f"border: 2px solid white !important; "
+            f"}}"
+        )
+    return "\n".join(rules)
 
 
 # ---------------------------------------------------------------------------
@@ -229,8 +259,7 @@ def _load_review_image(index: int) -> tuple:
     for ci in range(10):
         if ci < len(candidates):
             area_pct = f"{candidates[ci]['area_ratio'] * 100:.1f}%"
-            emoji = COLOR_EMOJIS[ci % len(COLOR_EMOJIS)]
-            btn_updates.append(gr.update(value=f"{emoji} #{ci} 面积 {area_pct}", visible=True))
+            btn_updates.append(gr.update(value=f"#{ci} 面积 {area_pct}", visible=True))
         else:
             btn_updates.append(gr.update(visible=False, value=""))
 
@@ -399,7 +428,7 @@ def _js_goto_tab(idx: int) -> str:
 # Build UI
 # ---------------------------------------------------------------------------
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="Pintconut 拼豆标注工具") as app:
+    with gr.Blocks(title="Pintconut 拼豆标注工具", css=_build_button_css()) as app:
         gr.Markdown("# 🫘 Pintconut 拼豆标注工具")
 
         # Hidden textbox used as dummy output for JS-only navigation buttons
@@ -458,7 +487,7 @@ def build_ui() -> gr.Blocks:
                         gr.Markdown("**候选区域**（点击选择拼板所在的区域）")
                         cand_buttons = []
                         for ci in range(10):
-                            btn = gr.Button(f"候选 {ci}", visible=False)
+                            btn = gr.Button(f"候选 {ci}", visible=False, elem_id=f"cand-btn-{ci}")
                             cand_buttons.append(btn)
                         gr.Markdown("---")
                         skip_btn = gr.Button("⏭️ 跳过这张", variant="secondary")

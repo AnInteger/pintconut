@@ -4,18 +4,19 @@ import shutil
 import cv2
 import numpy as np
 
-# BGR colors for candidate overlay — fully saturated, maximally separated
+# BGR colors for candidate overlay — 10 hues evenly spaced (HSV H=0,18,36,...,162)
+# Maximally separated, no similar pairs
 COLORS = [
-    (0, 0, 255),     # 0: Red
-    (255, 0, 0),     # 1: Blue
-    (0, 255, 0),     # 2: Green
-    (0, 255, 255),   # 3: Yellow
-    (255, 0, 255),   # 4: Magenta
-    (255, 255, 0),   # 5: Cyan
-    (0, 165, 255),   # 6: Orange
-    (180, 0, 255),   # 7: Pink
-    (0, 230, 150),   # 8: Teal
-    (0, 80, 140),    # 9: Brown
+    (0, 0, 255),       # 0: Red      HSV H=0
+    (0, 153, 255),     # 1: Orange   HSV H=18
+    (0, 255, 204),     # 2: Lime     HSV H=36
+    (0, 255, 51),      # 3: Green    HSV H=54
+    (102, 255, 0),     # 4: Spring   HSV H=72
+    (255, 255, 0),     # 5: Cyan     HSV H=90
+    (255, 102, 0),     # 6: Azure    HSV H=108
+    (255, 0, 51),      # 7: Blue     HSV H=126
+    (255, 0, 204),     # 8: Purple   HSV H=144
+    (153, 0, 255),     # 9: Rose     HSV H=162
 ]
 
 
