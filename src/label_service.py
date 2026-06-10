@@ -4,19 +4,20 @@ import shutil
 import cv2
 import numpy as np
 
-# BGR colors for candidate overlay — 10 hues evenly spaced (HSV H=0,18,36,...,162)
-# Maximally separated, no similar pairs
+# BGR colors for candidate overlay — 10 distinct color families.
+# Each from a different hue/saturation group for max perceptual distinction.
+# For >10 regions, colors cycle (COLORS[i % len]) but numbers stay unique.
 COLORS = [
-    (0, 0, 255),       # 0: Red      HSV H=0
-    (0, 153, 255),     # 1: Orange   HSV H=18
-    (0, 255, 204),     # 2: Lime     HSV H=36
-    (0, 255, 51),      # 3: Green    HSV H=54
-    (102, 255, 0),     # 4: Spring   HSV H=72
-    (255, 255, 0),     # 5: Cyan     HSV H=90
-    (255, 102, 0),     # 6: Azure    HSV H=108
-    (255, 0, 51),      # 7: Blue     HSV H=126
-    (255, 0, 204),     # 8: Purple   HSV H=144
-    (153, 0, 255),     # 9: Rose     HSV H=162
+    (0, 0, 255),       # 0: Red
+    (255, 0, 0),       # 1: Blue
+    (0, 255, 255),     # 2: Yellow
+    (0, 255, 0),       # 3: Green
+    (255, 0, 255),     # 4: Magenta
+    (0, 128, 255),     # 5: Orange
+    (255, 255, 0),     # 6: Cyan
+    (200, 0, 200),     # 7: Purple
+    (180, 0, 255),     # 8: Pink
+    (128, 128, 128),   # 9: Gray
 ]
 
 
@@ -95,8 +96,26 @@ def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
                 cx, cy = 30, 30 + i * 40
         else:
             cx, cy = 30, 30 + i * 40
-        cv2.putText(display, str(i), (cx - 10, cy + 10), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3, cv2.LINE_AA)
-        cv2.putText(display, str(i), (cx - 10, cy + 10), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color, 2, cv2.LINE_AA)
+        # Draw label with white background pill for readability on any color
+        label = str(i)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 1.2
+        thickness = 2
+        (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+        pad = 6
+        # White filled rectangle behind text
+        cv2.rectangle(display,
+                      (cx - tw // 2 - pad, cy - th // 2 - pad),
+                      (cx + tw // 2 + pad, cy + th // 2 + pad + baseline),
+                      (255, 255, 255), -1)
+        # Colored border around the pill matching the region color
+        cv2.rectangle(display,
+                      (cx - tw // 2 - pad, cy - th // 2 - pad),
+                      (cx + tw // 2 + pad, cy + th // 2 + pad + baseline),
+                      color, 2)
+        # Text in the region color
+        cv2.putText(display, label, (cx - tw // 2, cy + th // 2),
+                    font, font_scale, color, thickness, cv2.LINE_AA)
     return display
 
 

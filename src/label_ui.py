@@ -30,18 +30,18 @@ DATASET_DIR = os.path.join(BASE_DIR, "training", "dataset")
 # COLORS are BGR; we convert to RGB hex for CSS
 BUTTON_COLORS = [
     "#FF0000",  # 0: Red     BGR(0,0,255)
-    "#FF9900",  # 1: Orange  BGR(0,153,255)
-    "#CCFF00",  # 2: Lime    BGR(0,255,204)
-    "#33FF00",  # 3: Green   BGR(0,255,51)
-    "#00FF66",  # 4: Spring  BGR(102,255,0)
-    "#00FFFF",  # 5: Cyan    BGR(255,255,0)
-    "#0066FF",  # 6: Azure   BGR(255,102,0)
-    "#3300FF",  # 7: Blue    BGR(255,0,51)
-    "#CC00FF",  # 8: Purple  BGR(255,0,204)
-    "#FF0099",  # 9: Rose    BGR(153,0,255)
+    "#0000FF",  # 1: Blue    BGR(255,0,0)
+    "#FFFF00",  # 2: Yellow  BGR(0,255,255)
+    "#00FF00",  # 3: Green   BGR(0,255,0)
+    "#FF00FF",  # 4: Magenta BGR(255,0,255)
+    "#FF8000",  # 5: Orange  BGR(0,128,255)
+    "#00FFFF",  # 6: Cyan    BGR(255,255,0)
+    "#C800C8",  # 7: Purple  BGR(200,0,200)
+    "#FF00B4",  # 8: Pink    BGR(180,0,255)
+    "#808080",  # 9: Gray    BGR(128,128,128)
 ]
 # Light-colored buttons need dark text instead of white
-_LIGHT_BG_INDICES = {1, 2, 3, 4, 5}  # Orange, Lime, Green, Spring, Cyan
+_LIGHT_BG_INDICES = {2, 3, 6}  # Yellow, Green, Cyan
 
 
 def _build_button_css() -> str:
