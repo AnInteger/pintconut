@@ -85,7 +85,7 @@ def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
         mask = cand["mask"]
         overlay = display.copy()
         overlay[mask > 0] = color
-        cv2.addWeighted(overlay, 0.5, display, 0.5, 0, display)
+        cv2.addWeighted(overlay, 0.35, display, 0.65, 0, display)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(display, contours, -1, color, 2)
         if contours:
@@ -113,9 +113,9 @@ def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
                       (cx - tw // 2 - pad, cy - th // 2 - pad),
                       (cx + tw // 2 + pad, cy + th // 2 + pad + baseline),
                       color, 2)
-        # Text in the region color
+        # Text in dark color — always readable on white background
         cv2.putText(display, label, (cx - tw // 2, cy + th // 2),
-                    font, font_scale, color, thickness, cv2.LINE_AA)
+                    font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
     return display
 
 
