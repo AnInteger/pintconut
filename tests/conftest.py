@@ -78,10 +78,16 @@ def browser(gradio_server):
     pw.stop()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def page(browser, gradio_server):
-    """Provide a fresh Playwright page connected to the Gradio server."""
+    """Provide a shared Playwright page for the entire test module.
+
+    Tests are ordered as a sequential user journey, so they share state.
+    """
     page = browser.new_page()
-    page.goto(gradio_server, wait_until="networkidle")
+    page.goto(gradio_server, wait_until="domcontentloaded")
+    # Wait for Gradio to fully render (WS keeps network alive, so networkidle never fires)
+    page.wait_for_selector('button[role="tab"]', timeout=15000)
+    page.wait_for_timeout(2000)
     yield page
     page.close()
