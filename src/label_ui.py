@@ -13,6 +13,7 @@ import numpy as np
 
 from src.label_service import (
     draw_candidates,
+    draw_result,
     generate_dataset_yaml,
     save_label,
     segment_image,
@@ -140,6 +141,7 @@ def _store_segmentation_results(photos: list[str], model) -> None:
 # Annotation state management
 # ---------------------------------------------------------------------------
 _annotation_state: dict[str, str | None] = {}
+_pending_selection: dict[str, int] = {}
 
 
 def _init_annotation_state() -> None:
@@ -187,24 +189,33 @@ def _build_thumbnails_html() -> str:
     return "  |  ".join(parts)
 
 
+def _step3(image, info, progress, index, btn_updates, thumbnails,
+           confirm=False, reselect=False, export=False):
+    """Build a flat 18-element tuple for step3_outputs."""
+    return (image, info, progress, index, *btn_updates, thumbnails,
+            gr.update(visible=confirm),
+            gr.update(visible=reselect),
+            gr.update(visible=export))
+
+
 # ---------------------------------------------------------------------------
 # Step 3 — Review / Annotate
 # ---------------------------------------------------------------------------
 def _load_review_image(index: int) -> tuple:
-    """Load image for review. Returns flat tuple of 15 values for Gradio outputs:
-    (image, info_md, progress_md, index, *10 btn_updates, thumbnails_md)
-    """
+    """Load image for review. Returns 18-element tuple for step3_outputs."""
     photos = _list_photos()
     empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
 
     if not photos:
-        return (None, "没有照片", "进度：0 已标注，0 跳过，共 0 张", 0, *empty_btns, "")
+        return _step3(None, "没有照片", "进度：0 已标注，0 跳过，共 0 张", 0,
+                      empty_btns, "")
 
     index = max(0, min(index, len(photos) - 1))
     img_path = photos[index]
     img = cv2.imread(img_path)
     if img is None:
-        return (None, f"无法读取: {os.path.basename(img_path)}", "", index, *empty_btns, "")
+        return _step3(None, f"无法读取: {os.path.basename(img_path)}", "", index,
+                      empty_btns, "")
 
     candidates = _segmentation_cache.get(img_path, [])
     vis = draw_candidates(img, candidates)
@@ -223,7 +234,8 @@ def _load_review_image(index: int) -> tuple:
         else:
             btn_updates.append(gr.update(visible=False, value=""))
 
-    return (vis_rgb, info, progress_text, index, *btn_updates, _build_thumbnails_html())
+    return _step3(vis_rgb, info, progress_text, index, btn_updates,
+                  _build_thumbnails_html())
 
 
 def _handle_select_candidate(img_index: int, cand_index: int):
@@ -232,6 +244,42 @@ def _handle_select_candidate(img_index: int, cand_index: int):
         return _load_review_image(0)
 
     img_path = photos[img_index]
+    candidates = _segmentation_cache.get(img_path, [])
+    if cand_index >= len(candidates):
+        return _load_review_image(img_index)
+
+    # Store pending selection and show result preview
+    _pending_selection[img_path] = cand_index
+
+    cand = candidates[cand_index]
+    mask = cand["mask"]
+    img = cv2.imread(img_path)
+    if img is None:
+        return _load_review_image(img_index)
+
+    vis = draw_result(img, mask)
+    vis_rgb = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+
+    labeled, skipped, total = _get_annotation_progress()
+    progress_text = f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张"
+    info = f"📷 {os.path.basename(img_path)}（第 {img_index + 1}/{total} 张）\n\n✅ 已选择区域 {cand_index}，请确认或重新选择"
+    empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
+
+    return _step3(vis_rgb, info, progress_text, img_index, empty_btns,
+                  _build_thumbnails_html(), confirm=True, reselect=True)
+
+
+def _handle_confirm(img_index: int):
+    """Confirm pending selection: save label and advance to next image."""
+    photos = _list_photos()
+    if not photos or img_index >= len(photos):
+        return _load_review_image(0)
+
+    img_path = photos[img_index]
+    cand_index = _pending_selection.pop(img_path, None)
+    if cand_index is None:
+        return _load_review_image(img_index)
+
     candidates = _segmentation_cache.get(img_path, [])
     if cand_index >= len(candidates):
         return _load_review_image(img_index)
@@ -256,11 +304,24 @@ def _handle_select_candidate(img_index: int, cand_index: int):
     if next_idx < 0:
         labeled, skipped, total = _get_annotation_progress()
         empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
-        return (None, "🎉 全部处理完成！请点击上方「④ 导出数据集」标签继续",
-                f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
-                img_index, *empty_btns, _build_thumbnails_html())
+        return _step3(None, "🎉 全部处理完成！",
+                      f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
+                      img_index, empty_btns, _build_thumbnails_html(),
+                      export=True)
 
     return _load_review_image(next_idx)
+
+
+def _handle_reselect(img_index: int):
+    """Cancel pending selection and return to candidate view."""
+    photos = _list_photos()
+    if not photos or img_index >= len(photos):
+        return _load_review_image(0)
+
+    img_path = photos[img_index]
+    _pending_selection.pop(img_path, None)
+
+    return _load_review_image(img_index)
 
 
 def _handle_skip_photo(img_index: int):
@@ -275,9 +336,10 @@ def _handle_skip_photo(img_index: int):
     if next_idx < 0:
         labeled, skipped, total = _get_annotation_progress()
         empty_btns = [gr.update(visible=False, value="") for _ in range(10)]
-        return (None, "🎉 全部处理完成！请点击上方「④ 导出数据集」标签继续",
-                f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
-                img_index, *empty_btns, _build_thumbnails_html())
+        return _step3(None, "🎉 全部处理完成！",
+                      f"进度：{labeled} 已标注，{skipped} 跳过，共 {total} 张",
+                      img_index, empty_btns, _build_thumbnails_html(),
+                      export=True)
 
     return _load_review_image(next_idx)
 
@@ -400,10 +462,13 @@ def build_ui() -> gr.Blocks:
                             cand_buttons.append(btn)
                         gr.Markdown("---")
                         skip_btn = gr.Button("⏭️ 跳过这张", variant="secondary")
+                        confirm_btn = gr.Button("✅ 确认，下一张", variant="primary", visible=False)
+                        reselect_btn = gr.Button("↩️ 重新选择", variant="secondary", visible=False)
 
                 annotate_current_idx = gr.State(value=0)
 
                 init_annotate_btn = gr.Button("▶ 开始标注", variant="primary")
+                complete_export_btn = gr.Button("📦 导出数据集", variant="primary", visible=False)
 
             # ==== Tab 4: Export ====
             with gr.Tab("④ 导出数据集"):
@@ -416,7 +481,8 @@ def build_ui() -> gr.Blocks:
 
         # Step 2 → Step 3: init annotation state + load first image + switch tab
         step3_outputs = [review_image, annotate_info, annotate_progress,
-                         annotate_current_idx] + cand_buttons + [thumbnail_strip]
+                         annotate_current_idx] + cand_buttons + [thumbnail_strip,
+                         confirm_btn, reselect_btn, complete_export_btn]
 
         def _enter_step3():
             _init_annotation_state()
@@ -453,6 +519,25 @@ def build_ui() -> gr.Blocks:
             fn=lambda idx: _handle_skip_photo(int(idx)),
             inputs=[annotate_current_idx],
             outputs=step3_outputs,
+        )
+
+        # Confirm and reselect buttons
+        confirm_btn.click(
+            fn=lambda idx: _handle_confirm(int(idx)),
+            inputs=[annotate_current_idx],
+            outputs=step3_outputs,
+        )
+        reselect_btn.click(
+            fn=lambda idx: _handle_reselect(int(idx)),
+            inputs=[annotate_current_idx],
+            outputs=step3_outputs,
+        )
+
+        # Complete -> export button
+        complete_export_btn.click(
+            fn=lambda: "",
+            js=_js_goto_tab(3),
+            outputs=[_nav_dummy],
         )
 
     return app
