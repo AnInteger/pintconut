@@ -105,10 +105,42 @@ Playwright 测试发现两个严重问题：
 - `_segmentation_cache` — 缓存机制不变
 - `_annotation_state` / `_pending_selection` — 状态管理不变
 
+## 改动 4：Playwright 集成测试
+
+用 Playwright 自动化测试完整的 UI 交互流程，确保 Gradio 6.x 兼容性、按钮状态切换、Radio 选择等核心流程正确。
+
+**测试基础设施：**
+- 测试文件：`tests/test_label_ui_integration.py`
+- 使用 Playwright MCP 工具（或 `playwright` Python 包）驱动浏览器
+- 启动 Gradio 服务 → Playwright 连接 → 执行测试 → 关闭服务
+- 使用现有的 `training/photos/` 下的测试图片
+
+**测试用例：**
+
+| # | 测试名 | 验证内容 |
+|---|--------|---------|
+| 1 | 页面加载 | 2 个 Tab 存在，Tab ① 默认选中 |
+| 2 | 上传照片 | 上传后画廊显示图片，"开始标注"按钮激活 |
+| 3 | 开始标注 | 点击后自动跳转 Tab ②，进度条显示分割进度，完成后展示第一张图片 + Radio 候选选项 |
+| 4 | Radio 候选可见 | Radio 组件有 choices，interactive=True |
+| 5 | 选择候选 | 选择后显示绿色轮廓预览，确认/重新选择按钮激活 |
+| 6 | 重新选择 | 点击后恢复候选视图，Radio 恢复 interactive=True |
+| 7 | 确认标注 | 点击确认后保存标签，自动加载下一张 |
+| 8 | 跳过照片 | 跳过后标记为跳过，自动加载下一张 |
+| 9 | 全部完成 | 所有图片处理完后显示"全部完成"+ 导出按钮激活 |
+| 10 | 导出数据集 | 点击导出后显示数据集报告，包含统计信息 |
+
+**测试策略：**
+- 每个 `interactive` 状态变化通过 Playwright snapshot 验证（检查 `[disabled]` 属性）
+- 图片加载通过检查 `gr.Image` 组件有内容验证
+- Radio 选项通过检查 choices 文本验证
+- 全流程端到端测试覆盖所有关键路径
+
 ## 涉及文件
 
 | 文件 | 改动类型 |
 |------|---------|
 | `src/label_ui.py` | 大幅重构：删除 2 个 Tab，替换 10 个按钮为 Radio，重写流程 |
+| `tests/test_label_ui_integration.py` | 新增：Playwright 集成测试（10 个用例） |
 | `tests/test_label_service.py` | 不变 |
 | `src/label_service.py` | 不变 |
