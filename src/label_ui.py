@@ -223,9 +223,9 @@ def _step3(image, info, progress, index, btn_updates, thumbnails,
            confirm=False, reselect=False, export=False):
     """Build a flat 18-element tuple for step3_outputs."""
     return (image, info, progress, index, *btn_updates, thumbnails,
-            gr.update(visible=confirm),
-            gr.update(visible=reselect),
-            gr.update(visible=export))
+            gr.update(visible=confirm, interactive=confirm),
+            gr.update(visible=reselect, interactive=reselect),
+            gr.update(visible=export, interactive=export))
 
 
 # ---------------------------------------------------------------------------

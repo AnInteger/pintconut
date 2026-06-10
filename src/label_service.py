@@ -73,13 +73,89 @@ def segment_image(image: np.ndarray, model=None) -> list[dict]:
     return candidates[:10]
 
 
+def _resolve_label_positions(candidates: list[dict], img_h: int, img_w: int,
+                             font, font_scale: float, thickness: int, pad: int
+                             ) -> list[tuple[int, int, int, int, str]]:
+    """Compute non-overlapping label positions for all candidates.
+
+    Returns list of (x1, y1, x2, y2, label) for each candidate,
+    where (x1,y1)-(x2,y2) is the bounding box of the pill label.
+    Labels are shifted vertically to avoid collisions.
+    """
+    positions = []
+    placed_boxes = []  # list of (x1, y1, x2, y2) already placed
+
+    for i, cand in enumerate(candidates):
+        mask = cand["mask"]
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Compute ideal center from contour
+        if contours:
+            M = cv2.moments(contours[0])
+            if M["m00"] > 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+            else:
+                cx, cy = 30, 30 + i * 40
+        else:
+            cx, cy = 30, 30 + i * 40
+
+        label = str(i)
+        (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+
+        # Compute pill bounding box
+        x1 = cx - tw // 2 - pad
+        y1 = cy - th // 2 - pad
+        x2 = cx + tw // 2 + pad
+        y2 = cy + th // 2 + pad + baseline
+
+        # Resolve collisions: shift down until no overlap
+        for _ in range(50):
+            overlaps = False
+            for bx1, by1, bx2, by2 in placed_boxes:
+                if not (x2 < bx1 or x1 > bx2 or y2 < by1 or y1 > by2):
+                    overlaps = True
+                    break
+            if not overlaps:
+                break
+            y1 += th + pad
+            y2 += th + pad
+
+        # Clamp to image bounds
+        if y2 > img_h:
+            y2 = img_h - 5
+            y1 = y2 - (th + 2 * pad + baseline)
+        if x1 < 0:
+            x1 = 5
+            x2 = x1 + tw + 2 * pad
+        if x2 > img_w:
+            x2 = img_w - 5
+            x1 = x2 - tw - 2 * pad
+
+        placed_boxes.append((x1, y1, x2, y2))
+        positions.append((x1, y1, x2, y2, label))
+
+    return positions
+
+
 def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
     """Draw candidate region overlays on a copy of the image.
 
     Each candidate is rendered as a semi-transparent colored mask with
-    a contour outline and a numeric label.
+    a contour outline and a numeric label. Labels are collision-avoided
+    so they don't overlap with each other.
     """
     display = image.copy()
+    h, w = display.shape[:2]
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1.0
+    thickness = 2
+    pad = 6
+
+    # Pre-compute all label positions to avoid overlap
+    label_positions = _resolve_label_positions(candidates, h, w, font, font_scale, thickness, pad)
+
     for i, cand in enumerate(candidates):
         color = COLORS[i % len(COLORS)]
         mask = cand["mask"]
@@ -88,33 +164,17 @@ def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
         cv2.addWeighted(overlay, 0.35, display, 0.65, 0, display)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(display, contours, -1, color, 2)
-        if contours:
-            M = cv2.moments(contours[0])
-            if M["m00"] > 0:
-                cx, cy = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
-            else:
-                cx, cy = 30, 30 + i * 40
-        else:
-            cx, cy = 30, 30 + i * 40
-        # Draw label with white background pill for readability on any color
-        label = str(i)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.2
-        thickness = 2
+
+        # Draw label pill at resolved position
+        x1, y1, x2, y2, label = label_positions[i]
         (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
-        pad = 6
-        # White filled rectangle behind text
-        cv2.rectangle(display,
-                      (cx - tw // 2 - pad, cy - th // 2 - pad),
-                      (cx + tw // 2 + pad, cy + th // 2 + pad + baseline),
-                      (255, 255, 255), -1)
-        # Colored border around the pill matching the region color
-        cv2.rectangle(display,
-                      (cx - tw // 2 - pad, cy - th // 2 - pad),
-                      (cx + tw // 2 + pad, cy + th // 2 + pad + baseline),
-                      color, 2)
-        # Text in dark color — always readable on white background
-        cv2.putText(display, label, (cx - tw // 2, cy + th // 2),
+
+        # White filled rectangle
+        cv2.rectangle(display, (x1, y1), (x2, y2), (255, 255, 255), -1)
+        # Colored border
+        cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
+        # Dark text — always readable on white
+        cv2.putText(display, label, (x1 + pad, y2 - pad - baseline),
                     font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
     return display
 
