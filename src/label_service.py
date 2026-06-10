@@ -136,3 +136,27 @@ names:
     with open(yaml_path, "w") as f:
         f.write(yaml_content)
     return yaml_path
+
+
+def draw_result(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Draw annotation result on a copy of the image.
+
+    Renders the mask contour as a green outline with a label, suitable for
+    showing the user what they selected before confirming.
+    """
+    display = image.copy()
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return display
+    # Draw green contour
+    cv2.drawContours(display, contours, -1, (0, 255, 0), 2)
+    # Place label above the largest contour
+    contour = max(contours, key=cv2.contourArea)
+    M = cv2.moments(contour)
+    if M["m00"] > 0:
+        cx = int(M["m10"] / M["m00"])
+        top_y = contour[:, :, 1].min()
+        text_y = max(top_y - 10, 20)
+        cv2.putText(display, "board", (cx - 25, text_y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    return display

@@ -9,6 +9,7 @@ from src.label_service import (
     draw_candidates,
     save_label,
     generate_dataset_yaml,
+    draw_result,
 )
 
 
@@ -85,3 +86,31 @@ def test_generate_dataset_yaml():
             content = f.read()
         assert "beadboard" in content
         assert "train" in content
+
+
+def test_draw_result_returns_same_shape():
+    """draw_result should return an image with the same shape as input."""
+    img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+    mask = np.zeros((200, 200), dtype=np.uint8)
+    mask[50:150, 50:150] = 255
+    result = draw_result(img, mask)
+    assert result.shape == img.shape
+    assert result.dtype == np.uint8
+
+
+def test_draw_result_draws_contour():
+    """draw_result should modify the image around the mask boundary."""
+    img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+    mask = np.zeros((200, 200), dtype=np.uint8)
+    mask[50:150, 50:150] = 255
+    result = draw_result(img, mask)
+    # The pixel at the mask boundary (row 50) should differ from original
+    assert not np.array_equal(result[50, 50], img[50, 50])
+
+
+def test_draw_result_empty_mask():
+    """draw_result with an empty mask should return a copy of the image unchanged."""
+    img = np.ones((100, 100, 3), dtype=np.uint8) * 200
+    mask = np.zeros((100, 100), dtype=np.uint8)
+    result = draw_result(img, mask)
+    assert result.shape == img.shape
