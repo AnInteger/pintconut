@@ -36,6 +36,9 @@ flagged/
 # Output
 annotated_result.jpg
 
+# Archives
+training.zip
+
 # IDE
 .vscode/
 .idea/
@@ -50,4 +53,5 @@ Thumbs.db
 .playwright-mcp/
 
 # Superpowers brainstorming
+.superpowers/
 .superpowers/

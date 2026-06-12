@@ -1,6 +1,28 @@
 """Diff comparison and annotation module."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 import cv2
 import numpy as np
+
+from .grid import CellInfo
+
+
+# ---------------------------------------------------------------------------
+# Confidence-aware diff result
+# ---------------------------------------------------------------------------
+
+@dataclass
+class DiffResult:
+    """A single mismatch with per-cell confidence."""
+    row: int
+    col: int
+    type: str                       # "color_mismatch"
+    photo_color: list[int]
+    blueprint_color: list[int]
+    cell_confidence: float          # [0, 1]
+    is_reliable: bool               # True when confidence ≥ 0.8
 
 
 class DiffComparator:
@@ -8,6 +30,8 @@ class DiffComparator:
 
     def __init__(self, color_tolerance: float = 30.0):
         self.color_tolerance = color_tolerance
+
+    # -- legacy interface (unchanged) ----------------------------------------
 
     def compare(self, photo_grid: np.ndarray, blueprint_grid: np.ndarray) -> list[dict]:
         if photo_grid.shape != blueprint_grid.shape:
@@ -52,6 +76,71 @@ class DiffComparator:
             cv2.line(result, (cx - size, cy - size), (cx + size, cy + size), (0, 0, 255), 2)
             cv2.line(result, (cx - size, cy + size), (cx + size, cy - size), (0, 0, 255), 2)
         return result
+
+    # -- confidence-aware interface ------------------------------------------
+
+    def compare_with_confidence(
+        self,
+        photo_cells: list[CellInfo],
+        blueprint_grid: np.ndarray,
+    ) -> list[DiffResult]:
+        """Compare cells with per-cell confidence, skipping invisible cells."""
+        diffs: list[DiffResult] = []
+        for cell in photo_cells:
+            if not cell.is_visible:
+                continue
+
+            r, c = cell.row, cell.col
+            if r >= blueprint_grid.shape[0] or c >= blueprint_grid.shape[1]:
+                continue
+
+            photo_lab = self._rgb_to_lab(cell.color.astype(np.float32))
+            bp_lab = self._rgb_to_lab(blueprint_grid[r, c].astype(np.float32))
+            dist = float(np.sqrt(np.sum((photo_lab - bp_lab) ** 2)))
+            if dist > self.color_tolerance:
+                diffs.append(DiffResult(
+                    row=r,
+                    col=c,
+                    type="color_mismatch",
+                    photo_color=cell.color.tolist(),
+                    blueprint_color=blueprint_grid[r, c].tolist(),
+                    cell_confidence=cell.confidence,
+                    is_reliable=cell.confidence >= 0.8,
+                ))
+        return diffs
+
+    def annotate_with_confidence(
+        self,
+        photo: np.ndarray,
+        diffs: list[DiffResult],
+        rows: int,
+        cols: int,
+    ) -> np.ndarray:
+        """Annotate with colour coding: red = reliable, orange = unreliable."""
+        result = photo.copy()
+        h, w = result.shape[:2]
+        cell_h = h / rows
+        cell_w = w / cols
+
+        for diff in diffs:
+            r, c = diff.row, diff.col
+            x1 = int(c * cell_w)
+            y1 = int(r * cell_h)
+            x2 = int((c + 1) * cell_w)
+            y2 = int((r + 1) * cell_h)
+
+            colour = (0, 0, 255) if diff.is_reliable else (0, 165, 255)  # red / orange
+            cv2.rectangle(result, (x1, y1), (x2, y2), colour, 2)
+
+            cx = (x1 + x2) // 2
+            cy = (y1 + y2) // 2
+            size = min(int(cell_h), int(cell_w)) // 6
+            cv2.line(result, (cx - size, cy - size), (cx + size, cy + size), colour, 2)
+            cv2.line(result, (cx - size, cy + size), (cx + size, cy - size), colour, 2)
+
+        return result
+
+    # -- helpers -------------------------------------------------------------
 
     @staticmethod
     def _rgb_to_lab(rgb: np.ndarray) -> np.ndarray:

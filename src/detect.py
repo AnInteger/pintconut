@@ -4,8 +4,17 @@ Bead board detection module.
 Uses a fine-tuned YOLOv8-seg model to locate the bead board
 in a photo and extract its four corner points.
 """
+from __future__ import annotations
+
 import numpy as np
 import cv2
+
+from .edge_refiner import (
+    EdgeRefiner,
+    RefinerConfig,
+    BoardDetection,
+    DetectionError,
+)
 
 
 class BoardDetector:
@@ -52,6 +61,35 @@ class BoardDetector:
                 best_mask = mask_binary
 
         return best_mask
+
+    def refine(
+        self,
+        image: np.ndarray,
+        board_size: tuple[int, int],
+        config: RefinerConfig | None = None,
+    ) -> BoardDetection:
+        """Full board detection + edge refinement.
+
+        Replaces detect() + extract_corners() with a single call that
+        returns refined corners, confidence, and a visibility mask.
+
+        Args:
+            image: Input image (HxWx3 BGR array).
+            board_size: (rows, cols) bead grid dimensions.
+            config: Optional refiner configuration override.
+
+        Returns:
+            BoardDetection with corners, edges, confidence, visibility_mask.
+
+        Raises:
+            DetectionError: If YOLOv8-seg finds no board.
+        """
+        mask = self.detect(image)
+        if mask is None:
+            raise DetectionError("YOLOv8-seg 未检测到板子")
+
+        refiner = EdgeRefiner(config)
+        return refiner.refine(mask, image, board_size)
 
     def extract_corners(self, mask: np.ndarray) -> np.ndarray | None:
         """Extract 4 corner points from a binary board mask.
