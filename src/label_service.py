@@ -1,8 +1,10 @@
 """Label service - core logic for bead board labeling."""
 import os
 import shutil
+
 import cv2
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 
 # BGR colors for candidate overlay — 10 distinct color families.
 # Each from a different hue/saturation group for max perceptual distinction.
@@ -42,141 +44,230 @@ def is_rectangular(mask: np.ndarray, threshold: float = 0.80) -> tuple[bool, flo
     return ratio > threshold, ratio
 
 
-def segment_image(image: np.ndarray, model=None) -> list[dict]:
+# Segmentation parameter presets. The label UI can switch between these per
+# photo: 「标准」 is fast and accurate for well-framed boards (clear margin),
+# while 「宽松」 lowers conf/iou and raises imgsz to merge the tiny shards that
+# FastSAM produces on dense, full-frame bead photos — recovering the whole
+# board as one candidate (verified: IMG_6121 goes 0 -> 40% with loose params).
+SEG_PRESETS = {
+    "标准": {"conf": 0.4, "iou": 0.9, "imgsz": 640},
+    "宽松": {"conf": 0.25, "iou": 0.6, "imgsz": 1024},
+}
+
+
+def segment_image(image: np.ndarray, model=None, conf: float = 0.4,
+                  iou: float = 0.9, imgsz: int = 640) -> list[dict]:
     """Run FastSAM segmentation on an image and return rectangular candidates.
 
     Returns up to 10 candidate regions sorted by area (descending).
     Each candidate dict contains: mask, area, area_ratio, rect_ratio.
+
+    Masks are kept at the model's low resolution (retina_masks=False) for the
+    area/rectangularity filter, then only the handful of surviving candidates
+    are upscaled to full image resolution. With retina_masks=True every mask is
+    materialized at full resolution, which OOMs on large photos with many
+    regions (e.g. a 1920x1440 HEIC yielding 100+ masks ≈ >1 GB of float data).
     """
     if model is None:
         from ultralytics import FastSAM
         model = FastSAM("FastSAM-s.pt")
     h, w = image.shape[:2]
     img_area = h * w
-    results = model(image, device="cpu", retina_masks=True, imgsz=640, conf=0.4, iou=0.9)
+    results = model(image, device="cpu", retina_masks=False, imgsz=imgsz, conf=conf, iou=iou)
     if results[0].masks is None:
         return []
     masks = results[0].masks.data.cpu().numpy()
+    mh, mw = masks.shape[1], masks.shape[2]
+    lo_area = mh * mw
     candidates = []
     for m in masks:
-        mask_resized = cv2.resize(m, (w, h))
-        mask_binary = (mask_resized > 0.5).astype(np.uint8)
-        area = int(np.sum(mask_binary))
-        area_ratio = area / img_area
+        # Filter cheaply at the model's low resolution first.
+        m_bin = (m > 0.5).astype(np.uint8)
+        area_ratio = float(m_bin.sum()) / lo_area  # ratio is scale-invariant
         if area_ratio < 0.05 or area_ratio > 0.95:
             continue
-        rect_ok, rect_ratio = is_rectangular(mask_binary, threshold=0.5)
+        rect_ok, rect_ratio = is_rectangular(m_bin, threshold=0.5)
         if not rect_ok:
             continue
-        candidates.append({"mask": mask_binary, "area": area, "area_ratio": area_ratio, "rect_ratio": rect_ratio})
+        # Survivor: upscale just this mask to full resolution for display/labels.
+        mask_full = cv2.resize(m_bin, (w, h), interpolation=cv2.INTER_NEAREST)
+        area = int(mask_full.sum())
+        candidates.append({"mask": mask_full, "area": area,
+                           "area_ratio": area / img_area, "rect_ratio": rect_ratio})
     candidates.sort(key=lambda c: c["area"], reverse=True)
     return candidates[:10]
-
-
-def _resolve_label_positions(candidates: list[dict], img_h: int, img_w: int,
-                             font, font_scale: float, thickness: int, pad: int
-                             ) -> list[tuple[int, int, int, int, str]]:
-    """Compute non-overlapping label positions for all candidates.
-
-    Returns list of (x1, y1, x2, y2, label) for each candidate,
-    where (x1,y1)-(x2,y2) is the bounding box of the pill label.
-    Labels are shifted vertically to avoid collisions.
-    """
-    positions = []
-    placed_boxes = []  # list of (x1, y1, x2, y2) already placed
-
-    for i, cand in enumerate(candidates):
-        mask = cand["mask"]
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Compute ideal center from contour
-        if contours:
-            M = cv2.moments(contours[0])
-            if M["m00"] > 0:
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
-            else:
-                cx, cy = 30, 30 + i * 40
-        else:
-            cx, cy = 30, 30 + i * 40
-
-        label = str(i)
-        (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
-
-        # Compute pill bounding box
-        x1 = cx - tw // 2 - pad
-        y1 = cy - th // 2 - pad
-        x2 = cx + tw // 2 + pad
-        y2 = cy + th // 2 + pad + baseline
-
-        # Resolve collisions: shift down until no overlap
-        for _ in range(50):
-            overlaps = False
-            for bx1, by1, bx2, by2 in placed_boxes:
-                if not (x2 < bx1 or x1 > bx2 or y2 < by1 or y1 > by2):
-                    overlaps = True
-                    break
-            if not overlaps:
-                break
-            y1 += th + pad
-            y2 += th + pad
-
-        # Clamp to image bounds
-        if y2 > img_h:
-            y2 = img_h - 5
-            y1 = y2 - (th + 2 * pad + baseline)
-        if x1 < 0:
-            x1 = 5
-            x2 = x1 + tw + 2 * pad
-        if x2 > img_w:
-            x2 = img_w - 5
-            x1 = x2 - tw - 2 * pad
-
-        placed_boxes.append((x1, y1, x2, y2))
-        positions.append((x1, y1, x2, y2, label))
-
-    return positions
 
 
 def draw_candidates(image: np.ndarray, candidates: list[dict]) -> np.ndarray:
     """Draw candidate region overlays on a copy of the image.
 
-    Each candidate is rendered as a semi-transparent colored mask with
-    a contour outline and a numeric label. Labels are collision-avoided
-    so they don't overlap with each other.
+    Each candidate is rendered as a semi-transparent colored mask with a colored
+    contour outline. Rather than scattering tiny number labels across a busy
+    bead photo (hard to read), all candidates are consolidated into a single
+    chart-style legend panel in the top-left corner: each row pairs a color
+    swatch — matching the region's fill color — with its index and area, so the
+    user can cross-reference a colored region on the image with its legend entry.
     """
     display = image.copy()
     h, w = display.shape[:2]
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 1.0
-    thickness = 2
-    pad = 6
+    font_scale = max(1.2, h / 700.0)
+    thickness = max(2, int(round(font_scale * 1.2)))
+    contour_th = max(6, int(round(font_scale * 3)))
 
-    # Pre-compute all label positions to avoid overlap
-    label_positions = _resolve_label_positions(candidates, h, w, font, font_scale, thickness, pad)
+    # Winner-take-all coloring: assign each pixel to the SMALLEST candidate that
+    # contains it (candidates are sorted by area descending, so iterating in
+    # index order lets the smallest overwrite the larger ones). Each pixel then
+    # gets exactly one tint instead of a muddy stack of translucent overlays —
+    # so the region colors stay clean and distinct, matching the legend swatches.
+    owner = np.zeros((h, w), dtype=np.int32)
+    for i, cand in enumerate(candidates):
+        owner[cand["mask"] > 0] = i + 1
 
+    disp_f = display.astype(np.float32)
+    for i, cand in enumerate(candidates):
+        m = owner == (i + 1)
+        if not m.any():
+            continue
+        color = np.array(COLORS[i % len(COLORS)], dtype=np.float32)
+        disp_f[m] = disp_f[m] * 0.45 + color * 0.55
+    display = disp_f.astype(np.uint8)
+
+    # Colored contour outlines on top, to delineate each region's boundary.
     for i, cand in enumerate(candidates):
         color = COLORS[i % len(COLORS)]
-        mask = cand["mask"]
-        overlay = display.copy()
-        overlay[mask > 0] = color
-        cv2.addWeighted(overlay, 0.35, display, 0.65, 0, display)
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(display, contours, -1, color, 2)
+        contours, _ = cv2.findContours(cand["mask"], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(display, contours, -1, color, contour_th)
 
-        # Draw label pill at resolved position
-        x1, y1, x2, y2, label = label_positions[i]
-        (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
-
-        # White filled rectangle
-        cv2.rectangle(display, (x1, y1), (x2, y2), (255, 255, 255), -1)
-        # Colored border
-        cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
-        # Dark text — always readable on white
-        cv2.putText(display, label, (x1 + pad, y2 - pad - baseline),
-                    font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+    _draw_legend(display, candidates)
     return display
+
+
+# ---------------------------------------------------------------------------
+# Legend rendering (anti-aliased via Pillow for a clean, professional look)
+# ---------------------------------------------------------------------------
+_FONT_CANDIDATES = {
+    "bold": [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+    ],
+    "cjk": [
+        "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+    ],
+}
+_font_cache: dict = {}
+
+
+def _font(kind: str, size: int):
+    """Load a TrueType font (cached), falling back to Pillow's default bitmap."""
+    key = (kind, size)
+    if key not in _font_cache:
+        for path in _FONT_CANDIDATES.get(kind, []):
+            if os.path.exists(path):
+                try:
+                    _font_cache[key] = ImageFont.truetype(path, size)
+                    break
+                except Exception:
+                    continue
+        else:
+            _font_cache[key] = ImageFont.load_default()
+    return _font_cache[key]
+
+
+def _to_rgb(bgr) -> tuple[int, int, int]:
+    """Convert a BGR scalar (as used in COLORS) to an RGB tuple."""
+    return (int(bgr[2]), int(bgr[1]), int(bgr[0]))
+
+
+def _draw_legend(display: np.ndarray, candidates: list[dict]) -> None:
+    """Draw a polished, chart-style legend in the top-left corner.
+
+    Rendered anti-aliased through Pillow (cv2 Hershey fonts can't anti-alias or
+    show CJK). Each row pairs a rounded color swatch — matching the region's fill
+    color — with its index and area, on a dark rounded panel with a soft shadow
+    and a header. The result reads like a chart legend, so a colored region on
+    the image is matched to its entry by color.
+    """
+    if not candidates:
+        return
+    h, w = display.shape[:2]
+
+    # Size the legend relative to image height so that after Gradio downscales
+    # the photo to ~400-550px for display, the legend text is still ~16px and
+    # crisp rather than tiny and blurry.
+    font_size = max(28, int(round(h * 0.04)))
+    font = _font("bold", font_size)
+    header_font = _font("cjk", max(18, int(round(font_size * 0.7))))
+
+    pad = int(font_size * 0.95)            # panel inner padding
+    swatch_gap = int(font_size * 0.7)      # gap between swatch and text
+    row_gap = int(font_size * 0.55)        # gap between rows
+    swatch = int(font_size * 0.95)         # square swatch side
+    radius = max(3, swatch // 3)
+
+    # Work on a transparent RGBA layer composited over an RGB copy of the image.
+    base = Image.fromarray(cv2.cvtColor(display, cv2.COLOR_BGR2RGB)).convert("RGBA")
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+
+    # Measure rows.
+    rows = []
+    max_tw = 0
+    for i, cand in enumerate(candidates):
+        rgb = _to_rgb(COLORS[i % len(COLORS)])
+        text = f"#{i}    {cand['area_ratio'] * 100:.1f}%"
+        bbox = draw.textbbox((0, 0), text, font=font)
+        rows.append((rgb, text, bbox[2] - bbox[0], bbox[3] - bbox[1]))
+        max_tw = max(max_tw, bbox[2] - bbox[0])
+
+    header = "候选区域"
+    hbbox = draw.textbbox((0, 0), header, font=header_font)
+    hth = hbbox[3] - hbbox[1]
+    header_gap = int(font_size * 0.75)
+
+    content_w = max(max_tw, hbbox[2] - hbbox[0])
+    panel_w = pad + swatch + swatch_gap + content_w + pad
+    panel_h = pad + hth + header_gap + len(rows) * (swatch + row_gap) - row_gap + pad
+
+    x0, y0 = int(w * 0.025), int(h * 0.025)
+    x1, y1 = x0 + panel_w, y0 + panel_h
+    pr = radius + 4  # panel corner radius
+
+    # Soft drop shadow, then the dark panel with a subtle light border.
+    sh = max(3, font_size // 6)
+    draw.rounded_rectangle((x0 + sh, y0 + sh, x1 + sh, y1 + sh),
+                           radius=pr, fill=(0, 0, 0, 90))
+    draw.rounded_rectangle((x0, y0, x1, y1), radius=pr,
+                           fill=(26, 27, 30, 232),
+                           outline=(255, 255, 255, 60),
+                           width=max(1, font_size // 18))
+
+    # Header + divider line.
+    hx = x0 + pad
+    hy = y0 + pad
+    draw.text((hx, hy), header, font=header_font, fill=(236, 236, 236, 255), anchor="la")
+    div_y = hy + hth + header_gap // 2
+    draw.line((hx, div_y, x1 - pad, div_y), fill=(255, 255, 255, 45),
+              width=max(1, font_size // 22))
+
+    # Rows: rounded color swatch + label text, both vertically centered.
+    ry = hy + hth + header_gap
+    for rgb, text, _tw, _th in rows:
+        cy = ry + swatch // 2
+        sx = hx
+        sy = ry
+        draw.rounded_rectangle((sx, sy, sx + swatch, sy + swatch), radius=radius,
+                               fill=rgb + (255,), outline=(255, 255, 255, 200),
+                               width=max(1, font_size // 24))
+        draw.text((sx + swatch + swatch_gap, cy), text, font=font,
+                  fill=(240, 240, 240, 255), anchor="lm")
+        ry += swatch + row_gap
+
+    # Composite back onto the BGR image.
+    composited = Image.alpha_composite(base, layer).convert("RGB")
+    display[:] = cv2.cvtColor(np.array(composited), cv2.COLOR_RGB2BGR)
 
 
 def save_label(mask, image_path, output_images_dir, output_labels_dir, img_w, img_h) -> str:
