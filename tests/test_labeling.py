@@ -44,7 +44,6 @@ def test_label_projective_resolves_collisions_to_unique():
     true_centers = synth_grid_centers(8, 8, spacing=25.0, origin=(80, 80))
     centers = apply_homography(true_centers, H)
     beads = make_beads(centers)
-    from src.bead_grid import label_affine
     aff_labels, _ = label_affine(beads, np.array([0.0, 1.0]), np.array([1.0, 0.0]), 25.0)
     # sanity: affine stage actually collides (otherwise this test isn't exercising the path)
     assert len(set(aff_labels)) < len(aff_labels), "affine labels should collide here"

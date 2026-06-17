@@ -203,7 +203,9 @@ def label_projective(beads, affine_labels):
     for i in order:
         cand = (int(rounded[i, 0]), int(rounded[i, 1]))
         if cand not in free:
-            cand = min(free, key=lambda lc: np.linalg.norm(lat2[i] - np.array(lc)))
+            if free:
+                cand = min(free, key=lambda lc: np.linalg.norm(lat2[i] - np.array(lc)))
+            # else: free exhausted — keep the duplicate rounded cell rather than crash
         free.discard(cand)
         labels[i] = cand
 
