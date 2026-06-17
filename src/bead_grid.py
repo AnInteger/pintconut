@@ -301,3 +301,16 @@ def build_cells(image, beads, abs_labels, grid_map, rows, cols, truncation):
             cells.append(CellInfo(row=r, col=c, color=color, is_visible=is_visible,
                                   is_edge=is_edge, confidence=conf, image_xy=image_xy))
     return cells
+
+
+def evaluate_confidence(beads, cells, rows, cols, perspective_tier, grid_map):
+    """Confidence from fill ratio. (Reprojection residual wired into this in Task 15.)"""
+    fill = len(beads) / max(1, rows * cols)
+    if fill > 0.5:
+        level = "高"
+    elif fill > 0.2:
+        level = "中"
+    else:
+        level = "低"
+    return GridConfidence(bead_count=len(beads), grid_fill_ratio=float(fill),
+                          labeling_residual=0.0, perspective_tier=perspective_tier, level=level)

@@ -126,3 +126,19 @@ def test_build_cells_filled_and_empty():
     assert len(cells) == 9
     assert all(c.image_xy is not None for c in cells)
     assert len([c for c in cells if c.is_visible]) == 9
+
+from src.bead_grid import evaluate_confidence
+
+
+def test_confidence_high_for_full_grid():
+    centers = synth_grid_centers(5, 5, spacing=20.0, origin=(40, 40))
+    beads = make_beads(centers)
+    abs_labels = [(r, c) for r in range(5) for c in range(5)]
+    gmap = AffineMap(origin=np.array([40.0, 40.0]),
+                     d_row=np.array([0.0, 1.0]), d_col=np.array([1.0, 0.0]), spacing=20.0)
+    cells = build_cells(np.full((200, 200, 3), 235, dtype=np.uint8),
+                        beads, abs_labels, gmap, 5, 5, TruncationInfo(False, []))
+    conf = evaluate_confidence(beads, cells, 5, 5, False, gmap)
+    assert conf.bead_count == 25
+    assert 0.0 < conf.grid_fill_ratio <= 1.0
+    assert conf.level in ("高", "中", "低")
