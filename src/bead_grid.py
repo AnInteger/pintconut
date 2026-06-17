@@ -153,3 +153,18 @@ def estimate_grid_axes(beads: list[Bead]) -> tuple[np.ndarray, np.ndarray, float
     if vert[1] < 0:
         vert = -vert
     return vert, horiz, spacing   # (d_row, d_col, spacing)
+
+
+AFFINE_OK_THRESHOLD = 0.3
+
+
+def label_affine(beads, d_row, d_col, spacing):
+    """Assign (row, col) by orthogonal projection + rounding. Returns (labels, residual)."""
+    pts = np.array([b.xy for b in beads], dtype=np.float64)
+    s = pts @ (d_row + d_col)
+    origin = pts[int(np.argmin(s))]
+    a = (pts - origin) @ d_row / spacing     # row coordinate
+    b = (pts - origin) @ d_col / spacing     # col coordinate
+    labels = list(zip(np.round(a).astype(int), np.round(b).astype(int)))
+    frac = float(np.mean(np.abs(a - np.round(a)) + np.abs(b - np.round(b))))
+    return labels, frac

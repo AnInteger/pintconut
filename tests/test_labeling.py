@@ -1,0 +1,25 @@
+# tests/test_labeling.py
+import numpy as np
+from src.bead_grid import label_affine
+from tests._synth import synth_grid_centers, make_beads, apply_homography
+
+
+def test_label_affine_clean_grid():
+    centers = synth_grid_centers(5, 5, spacing=20.0, origin=(40, 40))
+    beads = make_beads(centers)
+    d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 20.0
+    labels, frac = label_affine(beads, d_row, d_col, spacing)
+    assert frac < 0.05                                   # clean affine grid: tiny residual
+    assert len(set(labels)) == 25                        # 5x5 unique
+    rs = [r for r, _ in labels]; cs = [c for _, c in labels]
+    assert min(rs) == 0 and max(rs) == 4
+    assert min(cs) == 0 and max(cs) == 4
+
+
+def test_label_affine_perspective_has_high_residual():
+    H = np.array([[1.2, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0008, 0.0, 1.0]])
+    centers = apply_homography(synth_grid_centers(8, 8, spacing=25.0, origin=(60, 60)), H)
+    beads = make_beads(centers)
+    d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 25.0
+    _, frac = label_affine(beads, d_row, d_col, spacing)
+    assert frac > 0.3                                     # perspective: affine residual is high
