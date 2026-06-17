@@ -100,6 +100,7 @@ class CellInfo:
     is_visible: bool           # Cell centre is inside the visible region
     is_edge: bool              # Cell is near the truncation boundary
     confidence: float          # Comparison confidence for this cell [0, 1]
+    image_xy: tuple[float, float] | None = None   # cell centre in original image
 
 
 class GridExtractor:
