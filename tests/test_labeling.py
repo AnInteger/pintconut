@@ -1,6 +1,6 @@
 # tests/test_labeling.py
 import numpy as np
-from src.bead_grid import label_affine
+from src.bead_grid import label_affine, label_projective
 from tests._synth import synth_grid_centers, make_beads, apply_homography
 
 
@@ -23,3 +23,15 @@ def test_label_affine_perspective_has_high_residual():
     d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 25.0
     _, frac = label_affine(beads, d_row, d_col, spacing)
     assert frac > 0.3                                     # perspective: affine residual is high
+
+
+def test_label_projective_recovers_perspective_grid():
+    H = np.array([[1.2, 0.05, 0.0], [0.03, 1.0, 0.0], [0.0008, 0.0001, 1.0]])
+    true_centers = synth_grid_centers(8, 8, spacing=25.0, origin=(80, 80))
+    centers = apply_homography(true_centers, H)
+    beads = make_beads(centers)
+    d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 25.0
+    aff_labels, _ = label_affine(beads, d_row, d_col, spacing)
+    labels, res_px = label_projective(beads, aff_labels)
+    assert res_px < spacing * 0.3                         # tiny reprojection residual
+    assert len(set(labels)) == 64                         # 8x8 unique
