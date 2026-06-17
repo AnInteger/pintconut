@@ -23,6 +23,7 @@ class DiffResult:
     blueprint_color: list[int]
     cell_confidence: float          # [0, 1]
     is_reliable: bool               # True when confidence ≥ 0.8
+    image_xy: tuple[float, float] | None = None   # cell centre in original image
 
 
 class DiffComparator:
@@ -106,6 +107,7 @@ class DiffComparator:
                     blueprint_color=blueprint_grid[r, c].tolist(),
                     cell_confidence=cell.confidence,
                     is_reliable=cell.confidence >= 0.8,
+                    image_xy=cell.image_xy,
                 ))
         return diffs
 
@@ -116,28 +118,28 @@ class DiffComparator:
         rows: int,
         cols: int,
     ) -> np.ndarray:
-        """Annotate with colour coding: red = reliable, orange = unreliable."""
+        """Annotate at each diff's real image position (red=reliable, orange=unreliable)."""
         result = photo.copy()
         h, w = result.shape[:2]
         cell_h = h / rows
         cell_w = w / cols
-
         for diff in diffs:
-            r, c = diff.row, diff.col
-            x1 = int(c * cell_w)
-            y1 = int(r * cell_h)
-            x2 = int((c + 1) * cell_w)
-            y2 = int((r + 1) * cell_h)
-
-            colour = (0, 0, 255) if diff.is_reliable else (0, 165, 255)  # red / orange
+            if diff.image_xy is not None:
+                cx, cy = int(diff.image_xy[0]), int(diff.image_xy[1])
+                half_w = max(4, int(cell_w / 2))
+                half_h = max(4, int(cell_h / 2))
+                x1, y1 = cx - half_w, cy - half_h
+                x2, y2 = cx + half_w, cy + half_h
+            else:
+                r, c = diff.row, diff.col
+                x1 = int(c * cell_w); y1 = int(r * cell_h)
+                x2 = int((c + 1) * cell_w); y2 = int((r + 1) * cell_h)
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+            colour = (0, 0, 255) if diff.is_reliable else (0, 165, 255)
             cv2.rectangle(result, (x1, y1), (x2, y2), colour, 2)
-
-            cx = (x1 + x2) // 2
-            cy = (y1 + y2) // 2
             size = min(int(cell_h), int(cell_w)) // 6
             cv2.line(result, (cx - size, cy - size), (cx + size, cy + size), colour, 2)
             cv2.line(result, (cx - size, cy + size), (cx + size, cy - size), colour, 2)
-
         return result
 
     # -- helpers -------------------------------------------------------------

@@ -1,6 +1,7 @@
 """Tests for diff comparison and annotation module."""
 import numpy as np
-from src.compare import DiffComparator
+from src.compare import DiffComparator, DiffResult
+from src.grid import CellInfo
 
 
 def test_compare_identical_grids():
@@ -49,3 +50,26 @@ def test_annotate_creates_output_image():
     assert result.shape == photo.shape
     assert result.dtype == np.uint8
     assert not np.array_equal(result, photo)
+
+
+def _cell(r, c, rgb, xy):
+    return CellInfo(row=r, col=c, color=np.array(rgb, dtype=np.uint8),
+                    is_visible=True, is_edge=False, confidence=1.0, image_xy=xy)
+
+
+def test_compare_carries_image_xy():
+    cells = [_cell(0, 0, [255, 0, 0], (30.0, 40.0))]
+    bp = np.zeros((1, 1, 3), dtype=np.uint8)  # blueprint black
+    diffs = DiffComparator(color_tolerance=10.0).compare_with_confidence(cells, bp)
+    assert len(diffs) == 1
+    assert diffs[0].image_xy == (30.0, 40.0)
+
+
+def test_annotate_draws_at_image_xy():
+    photo = np.full((100, 100, 3), 200, dtype=np.uint8)
+    diffs = [DiffResult(row=0, col=0, type="color_mismatch",
+                        photo_color=[255, 0, 0], blueprint_color=[0, 0, 0],
+                        cell_confidence=1.0, is_reliable=True, image_xy=(50.0, 60.0))]
+    out = DiffComparator().annotate_with_confidence(photo, diffs, rows=4, cols=4)
+    region = out[55:65, 45:55]
+    assert np.any(np.all(region == (0, 0, 255), axis=-1))   # red mark near (50,60)
