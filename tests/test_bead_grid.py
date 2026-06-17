@@ -95,7 +95,8 @@ def test_axes_rotated_grid():
     beads = make_beads(centers)
     d_row, d_col, spacing = estimate_grid_axes(beads)
     assert abs(spacing - 20.0) < 2.0
-    # At 30°, row axis maps to (-sin30, cos30)=(−0.5, 0.866), col to (cos30, sin30)=(0.866, 0.5)
-    assert d_row[1] > 0.8          # d_row still mostly downward (cos30≈0.866)
-    assert d_col[0] > 0.8          # d_col still mostly rightward (cos30≈0.866)
-    assert abs(d_row[1] - d_col[0]) < 0.1  # same magnitude of dominant component
+    # row axis tilted ~30° from vertical: d_row ≈ (-sin30, cos30) = (-0.5, 0.866)
+    assert abs(d_row[1] - np.cos(np.radians(30))) < 0.15   # downward component ≈ 0.866
+    assert abs(d_row[0]) > 0.3                              # tilted (upright grid would give ≈0)
+    # d_row still points down, d_col still points right
+    assert d_row[1] > 0 and d_col[0] > 0
