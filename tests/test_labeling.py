@@ -1,6 +1,6 @@
 # tests/test_labeling.py
 import numpy as np
-from src.bead_grid import label_affine, label_projective
+from src.bead_grid import label_affine, label_projective, label_beads
 from tests._synth import synth_grid_centers, make_beads, apply_homography
 
 
@@ -55,3 +55,22 @@ def test_label_projective_resolves_collisions_to_unique():
     assert (max(rs) - min(rs)) >= 7 and (max(cs) - min(cs)) >= 7
     assert len(labels) == 64
     assert res_px < 25.0 * 0.3
+
+
+def test_label_beads_affine_for_upright():
+    centers = synth_grid_centers(6, 6, spacing=20.0, origin=(40, 40))
+    beads = make_beads(centers)
+    d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 20.0
+    labels, persp = label_beads(beads, d_row, d_col, spacing)
+    assert persp is False
+    assert len(set(labels)) == 36
+
+
+def test_label_beads_projective_for_perspective():
+    H = np.array([[1.2, 0.05, 0.0], [0.03, 1.0, 0.0], [0.0008, 0.0001, 1.0]])
+    centers = apply_homography(synth_grid_centers(8, 8, spacing=25.0, origin=(80, 80)), H)
+    beads = make_beads(centers)
+    d_row = np.array([0.0, 1.0]); d_col = np.array([1.0, 0.0]); spacing = 25.0
+    labels, persp = label_beads(beads, d_row, d_col, spacing)
+    assert persp is True
+    assert len(set(labels)) == 64

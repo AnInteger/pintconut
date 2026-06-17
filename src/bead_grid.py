@@ -214,3 +214,15 @@ def label_projective(beads, affine_labels):
     pred = pred[:, :2] / pred[:, 2:3]
     res_px = float(np.mean(np.linalg.norm(pred - pts_u, axis=1)))
     return labels, res_px
+
+
+def label_beads(beads, d_row, d_col, spacing):
+    """Two-tier labeling: affine by default, escalate to projective when residual is high.
+    Returns (labels, perspective_tier)."""
+    labels, frac = label_affine(beads, d_row, d_col, spacing)
+    if frac < AFFINE_OK_THRESHOLD:
+        return labels, False
+    labels2, res_px = label_projective(beads, labels)
+    if res_px < spacing * 0.3:
+        return labels2, True
+    return labels, False
