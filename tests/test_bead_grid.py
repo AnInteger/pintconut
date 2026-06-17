@@ -100,3 +100,29 @@ def test_axes_rotated_grid():
     assert abs(d_row[0]) > 0.3                              # tilted (upright grid would give ≈0)
     # d_row still points down, d_col still points right
     assert d_row[1] > 0 and d_col[0] > 0
+
+
+from src.bead_grid import fit_grid_map, build_cells, AffineMap, TruncationInfo
+
+
+def test_fit_grid_map_affine_roundtrip():
+    centers = synth_grid_centers(4, 4, spacing=20.0, origin=(40, 40))
+    beads = make_beads(centers)
+    abs_labels = [(r, c) for r in range(4) for c in range(4)]
+    gmap = fit_grid_map(beads, abs_labels, False,
+                        np.array([0.0, 1.0]), np.array([1.0, 0.0]), 20.0)
+    for bead, (r, c) in zip(beads, abs_labels):
+        np.testing.assert_allclose(gmap.to_xy(r, c), bead.xy, atol=2.0)
+
+
+def test_build_cells_filled_and_empty():
+    centers = synth_grid_centers(3, 3, spacing=20.0, origin=(40, 40))
+    beads = make_beads(centers)
+    abs_labels = [(r, c) for r in range(3) for c in range(3)]
+    gmap = AffineMap(origin=np.array([40.0, 40.0]),
+                     d_row=np.array([0.0, 1.0]), d_col=np.array([1.0, 0.0]), spacing=20.0)
+    cells = build_cells(np.full((200, 200, 3), 235, dtype=np.uint8),
+                        beads, abs_labels, gmap, 3, 3, TruncationInfo(False, []))
+    assert len(cells) == 9
+    assert all(c.image_xy is not None for c in cells)
+    assert len([c for c in cells if c.is_visible]) == 9

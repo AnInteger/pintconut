@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 
 from .bead_prelabel import hough_circles_to_boxes
+from .grid import CellInfo
 
 
 class GridFitError(Exception):
@@ -250,3 +251,53 @@ def resolve_dims_and_offset(labels, board_size, img_shape):
         if det_cols < cols:
             clipped.append("left/right")
     return rows, cols, abs_labels, TruncationInfo(is_truncated=bool(clipped), clipped_edges=clipped)
+
+
+def fit_grid_map(beads, abs_labels, perspective_tier, d_row, d_col, spacing):
+    """Fit an ABSOLUTE (row, col) -> image map consistent with abs_labels.
+    Must be called AFTER offset normalization so to_xy(r, c) is valid for any cell."""
+    pts = np.array([b.xy for b in beads], dtype=np.float64)
+    labels_arr = np.array(abs_labels, dtype=np.float64)
+    if perspective_tier:
+        H, _ = cv2.findHomography(labels_arr.astype(np.float32), pts.astype(np.float32))
+        return ProjectiveMap(H=H)
+    # affine: robust origin = median over beads of (xy - r*s*d_row - c*s*d_col)
+    origins = pts - labels_arr[:, 0:1] * spacing * d_row - labels_arr[:, 1:2] * spacing * d_col
+    origin = np.median(origins, axis=0)
+    return AffineMap(origin=origin, d_row=d_row, d_col=d_col, spacing=spacing)
+
+
+def _is_edge_cell(r, c, rows, cols, truncation, margin=1):
+    return r < margin or r >= rows - margin or c < margin or c >= cols - margin
+
+
+def build_cells(image, beads, abs_labels, grid_map, rows, cols, truncation):
+    """Build rows x cols CellInfo grid. Filled cells take bead colour; empty cells sample board base."""
+    h, w = image.shape[:2]
+    cell_bead = {}
+    for bead, (r, c) in zip(beads, abs_labels):
+        if 0 <= r < rows and 0 <= c < cols:
+            cell_bead[(r, c)] = bead
+    cells = []
+    for r in range(rows):
+        for c in range(cols):
+            xy = grid_map.to_xy(r, c)
+            inside = (0 <= xy[0] < w and 0 <= xy[1] < h)
+            if (r, c) in cell_bead:
+                bead = cell_bead[(r, c)]
+                color = bead.color
+                is_visible = inside
+                image_xy = (float(bead.xy[0]), float(bead.xy[1]))
+            elif inside:
+                color = _sample_color(image, xy)
+                is_visible = True
+                image_xy = (float(xy[0]), float(xy[1]))
+            else:
+                color = np.array([0, 0, 0], dtype=np.uint8)
+                is_visible = False
+                image_xy = None
+            is_edge = _is_edge_cell(r, c, rows, cols, truncation)
+            conf = 0.5 if is_edge else (1.0 if is_visible else 0.0)
+            cells.append(CellInfo(row=r, col=c, color=color, is_visible=is_visible,
+                                  is_edge=is_edge, confidence=conf, image_xy=image_xy))
+    return cells
