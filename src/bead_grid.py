@@ -85,13 +85,20 @@ def _sample_color(image, xy, half=3):
 
 
 def detect_beads(image: np.ndarray) -> list[Bead]:
-    """Detect beads via HoughCircles (dark ring) + median-size filter + colour sample."""
+    """Detect beads via HoughCircles (dark ring) + median-size filter + colour sample.
+
+    Radius range derived from image size (assuming board fills most of frame).
+    min_dist set to ~1.2x max radius to enforce minimum bead spacing.
+    Median-size filter (0.6x–1.5x) rejects outlier detections.
+    param2=25 (slightly more sensitive than default 30) for better recall on photos.
+    """
     h, w = image.shape[:2]
     max_r = max(4, int(min(h, w) / 20))
-    min_r = max(2, max_r // 6)
+    min_r = max(2, max_r // 3)
+    min_dist = max(8, int(max_r * 1.2))
     boxes = hough_circles_to_boxes(
         image, min_radius=min_r, max_radius=max_r,
-        min_dist=max(6, max_r), param2=30,
+        min_dist=min_dist, param2=25,
     )
     if not boxes:
         return []
@@ -99,7 +106,7 @@ def detect_beads(image: np.ndarray) -> list[Bead]:
     med = float(np.median(radii))
     beads: list[Bead] = []
     for b, r in zip(boxes, radii):
-        if not (med * 0.5 <= r <= med * 2.0):
+        if not (med * 0.6 <= r <= med * 1.5):
             continue
         cx, cy = int(b["cx"]), int(b["cy"])
         color = _sample_color(image, (cx, cy), half=max(1, int(r / 3)))
@@ -219,12 +226,17 @@ def label_projective(beads, affine_labels):
 
 def label_beads(beads, d_row, d_col, spacing):
     """Two-tier labeling: affine by default, escalate to projective when residual is high.
-    Returns (labels, perspective_tier)."""
+    Returns (labels, perspective_tier).
+
+    Perspective upgrade threshold set to spacing * 0.4 (pixels) — more forgiving than
+    the original 0.3x to correctly flag tilted boards in real photos where the affine fit
+    is only mildly inaccurate.
+    """
     labels, frac = label_affine(beads, d_row, d_col, spacing)
     if frac < AFFINE_OK_THRESHOLD:
         return labels, False
     labels2, res_px = label_projective(beads, labels)
-    if res_px < spacing * 0.3:
+    if res_px < spacing * 0.4:
         return labels2, True
     return labels, False
 

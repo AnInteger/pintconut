@@ -28,6 +28,8 @@ models/
 # Test artifacts
 .pytest_cache/
 tests/fixtures/
+!tests/fixtures/test_blueprint_5x5.png
+!tests/fixtures/board_regression/
 
 # Gradio
 flagged/
