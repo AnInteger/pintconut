@@ -34,3 +34,29 @@ def test_gridresult_constructs():
 
 def test_gridfiterror_is_exception():
     assert issubclass(GridFitError, Exception)
+
+from tests._synth import synth_grid_centers, apply_homography, render_beads, make_beads
+
+
+def test_synth_grid_shape_and_spacing():
+    pts = synth_grid_centers(rows=3, cols=4, spacing=20.0, origin=(10.0, 10.0))
+    assert pts.shape == (12, 2)
+    np.testing.assert_allclose(pts[1] - pts[0], [20.0, 0.0], atol=1e-9)   # adjacent column
+    np.testing.assert_allclose(pts[4] - pts[0], [0.0, 20.0], atol=1e-9)   # adjacent row
+
+def test_synth_grid_rotation():
+    pts = synth_grid_centers(2, 2, spacing=10.0, origin=(0.0, 0.0), angle=np.pi / 2)
+    np.testing.assert_allclose(pts[1], [0.0, 10.0], atol=1e-9)
+
+def test_apply_homography_identity():
+    pts = synth_grid_centers(2, 2)
+    np.testing.assert_allclose(apply_homography(pts, np.eye(3)), pts, atol=1e-9)
+
+def test_render_beads_shape():
+    img = render_beads(synth_grid_centers(3, 3), img_size=(200, 200))
+    assert img.shape == (200, 200, 3)
+
+def test_make_beads():
+    beads = make_beads(synth_grid_centers(2, 2))
+    assert len(beads) == 4
+    assert beads[0].xy.shape == (2,)
