@@ -226,3 +226,27 @@ def label_beads(beads, d_row, d_col, spacing):
     if res_px < spacing * 0.3:
         return labels2, True
     return labels, False
+
+
+def resolve_dims_and_offset(labels, board_size, img_shape):
+    """Resolve rows/cols + absolute (0-based) offset + truncation. Assumes top-left visible (MVP)."""
+    arr = np.array(labels)
+    a_min, a_max = int(arr[:, 0].min()), int(arr[:, 0].max())
+    b_min, b_max = int(arr[:, 1].min()), int(arr[:, 1].max())
+    det_rows = a_max - a_min + 1
+    det_cols = b_max - b_min + 1
+
+    if board_size is not None:
+        rows, cols = board_size
+    else:
+        rows, cols = det_rows, det_cols
+
+    abs_labels = [(a - a_min, b - b_min) for (a, b) in labels]
+
+    clipped: list[str] = []
+    if board_size is not None:
+        if det_rows < rows:
+            clipped.append("top/bottom")
+        if det_cols < cols:
+            clipped.append("left/right")
+    return rows, cols, abs_labels, TruncationInfo(is_truncated=bool(clipped), clipped_edges=clipped)

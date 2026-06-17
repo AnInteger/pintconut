@@ -1,6 +1,6 @@
 # tests/test_labeling.py
 import numpy as np
-from src.bead_grid import label_affine, label_projective, label_beads
+from src.bead_grid import label_affine, label_projective, label_beads, resolve_dims_and_offset
 from tests._synth import synth_grid_centers, make_beads, apply_homography
 
 
@@ -74,3 +74,26 @@ def test_label_beads_projective_for_perspective():
     labels, persp = label_beads(beads, d_row, d_col, spacing)
     assert persp is True
     assert len(set(labels)) == 64
+
+
+def test_resolve_full_board_auto_size():
+    labels = [(r, c) for r in range(5) for c in range(7)]
+    rows, cols, abs_labels, trunc = resolve_dims_and_offset(labels, None, (400, 400))
+    assert (rows, cols) == (5, 7)
+    assert trunc.is_truncated is False
+    assert min(r for r, _ in abs_labels) == 0
+
+
+def test_resolve_truncated_with_board_size():
+    labels = [(r, c) for r in range(5) for c in range(5)]      # only 5x5 visible, board is 5x8
+    rows, cols, abs_labels, trunc = resolve_dims_and_offset(labels, (5, 8), (400, 400))
+    assert (rows, cols) == (5, 8)
+    assert trunc.is_truncated is True
+    assert "left/right" in trunc.clipped_edges
+
+
+def test_resolve_offset_normalizes_topleft():
+    labels = [(r + 3, c + 4) for r in range(2) for c in range(2)]
+    rows, cols, abs_labels, trunc = resolve_dims_and_offset(labels, None, (400, 400))
+    assert (rows, cols) == (2, 2)
+    assert abs_labels[0] == (0, 0)
