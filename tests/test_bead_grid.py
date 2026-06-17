@@ -78,3 +78,24 @@ def test_detect_beads_finds_grid():
 def test_detect_beads_empty_image():
     img = np.full((100, 100, 3), 235, dtype=np.uint8)
     assert detect_beads(img) == []
+
+from src.bead_grid import estimate_grid_axes
+
+
+def test_axes_upright_grid():
+    centers = synth_grid_centers(6, 6, spacing=20.0, origin=(30, 30))
+    beads = make_beads(centers)
+    d_row, d_col, spacing = estimate_grid_axes(beads)
+    assert abs(spacing - 20.0) < 2.0
+    assert d_row[1] > 0.9        # d_row points down ≈ (0,1)
+    assert d_col[0] > 0.9        # d_col points right ≈ (1,0)
+
+def test_axes_rotated_grid():
+    centers = synth_grid_centers(6, 6, spacing=20.0, origin=(200, 30), angle=np.radians(30))
+    beads = make_beads(centers)
+    d_row, d_col, spacing = estimate_grid_axes(beads)
+    assert abs(spacing - 20.0) < 2.0
+    # At 30°, row axis maps to (-sin30, cos30)=(−0.5, 0.866), col to (cos30, sin30)=(0.866, 0.5)
+    assert d_row[1] > 0.8          # d_row still mostly downward (cos30≈0.866)
+    assert d_col[0] > 0.8          # d_col still mostly rightward (cos30≈0.866)
+    assert abs(d_row[1] - d_col[0]) < 0.1  # same magnitude of dominant component

@@ -105,3 +105,51 @@ def detect_beads(image: np.ndarray) -> list[Bead]:
         beads.append(Bead(xy=np.array([cx, cy], dtype=np.float64),
                           color=color, radius=float(r)))
     return beads
+
+
+def estimate_grid_axes(beads: list[Bead]) -> tuple[np.ndarray, np.ndarray, float]:
+    """Estimate oriented row/col unit axes + spacing from bead centres (vector voting)."""
+    from scipy.spatial import cKDTree
+
+    pts = np.array([b.xy for b in beads], dtype=np.float64)
+    n = len(pts)
+    tree = cKDTree(pts)
+    k = min(9, n)
+    _, idx = tree.query(pts, k=k)
+    vecs = np.vstack([pts[j] - pts[i] for i in range(n) for j in idx[i, 1:]])
+    lengths = np.linalg.norm(vecs, axis=1)
+    med = float(np.median(lengths))
+    near_mask = lengths <= med * 1.8
+    near = vecs[near_mask]
+    near_len = lengths[near_mask]
+
+    # dominant orientations (undirected, folded to [0, pi))
+    ang = np.mod(np.arctan2(near[:, 1], near[:, 0]), np.pi)
+    hist, edges = np.histogram(ang, bins=180, range=(0.0, np.pi))
+    i1 = int(np.argmax(hist))
+    a1 = edges[i1]
+    suppressed = hist.copy()
+    for w in range(-20, 21):
+        suppressed[(i1 + w) % 180] = 0
+    i2 = int(np.argmax(suppressed))
+    a2 = edges[i2]
+
+    v1 = np.array([np.cos(a1), np.sin(a1)])
+    v2 = np.array([np.cos(a2), np.sin(a2)])
+
+    # spacing: median length of vectors aligned with either axis
+    align1 = np.abs(near @ v1)
+    align2 = np.abs(near @ v2)
+    aligned = near_len[(align1 > 0.9 * near_len) | (align2 > 0.9 * near_len)]
+    spacing = float(np.median(aligned)) if len(aligned) else med
+
+    # orient: row axis = more vertical (points down), col axis = more horizontal (points right)
+    if abs(v1[0]) > abs(v1[1]):
+        horiz, vert = v1, v2
+    else:
+        horiz, vert = v2, v1
+    if horiz[0] < 0:
+        horiz = -horiz
+    if vert[1] < 0:
+        vert = -vert
+    return vert, horiz, spacing   # (d_row, d_col, spacing)
