@@ -314,3 +314,29 @@ def evaluate_confidence(beads, cells, rows, cols, perspective_tier, grid_map):
         level = "低"
     return GridConfidence(bead_count=len(beads), grid_fill_ratio=float(fill),
                           labeling_residual=0.0, perspective_tier=perspective_tier, level=level)
+
+
+class BeadGridFitter:
+    """Detects the bead grid directly from beads (no board model)."""
+
+    def fit(self, image: np.ndarray, board_size: tuple[int, int] | None = None) -> GridResult:
+        beads = detect_beads(image)
+        if len(beads) < MIN_BEADS:
+            raise GridFitError(f"检出豆子太少({len(beads)})，无法分组")
+
+        d_row, d_col, spacing = estimate_grid_axes(beads)
+        labels, persp = label_beads(beads, d_row, d_col, spacing)
+        rows, cols, abs_labels, trunc = resolve_dims_and_offset(labels, board_size, image.shape)
+        grid_map = fit_grid_map(beads, abs_labels, persp, d_row, d_col, spacing)
+        cells = build_cells(image, beads, abs_labels, grid_map, rows, cols, trunc)
+        confidence = evaluate_confidence(beads, cells, rows, cols, persp, grid_map)
+
+        outline = np.array([
+            grid_map.to_xy(0, 0),
+            grid_map.to_xy(0, cols),
+            grid_map.to_xy(rows, cols),
+            grid_map.to_xy(rows, 0),
+        ], dtype=np.float32)
+
+        return GridResult(rows=rows, cols=cols, cells=cells, outline=outline,
+                          confidence=confidence, truncation=trunc)

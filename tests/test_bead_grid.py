@@ -142,3 +142,26 @@ def test_confidence_high_for_full_grid():
     assert conf.bead_count == 25
     assert 0.0 < conf.grid_fill_ratio <= 1.0
     assert conf.level in ("高", "中", "低")
+
+
+# --- Task 11: BeadGridFitter orchestrator ---
+
+from src.bead_grid import BeadGridFitter
+
+
+def test_fit_end_to_end_upright():
+    centers = synth_grid_centers(6, 7, spacing=25.0, origin=(50, 50))
+    img = render_beads(centers, img_size=(300, 250), bead_radius=9)
+    result = BeadGridFitter().fit(img)
+    assert result.rows == 6 and result.cols == 7
+    assert len(result.cells) == 42
+    assert result.outline is not None and result.outline.shape == (4, 2)
+    assert result.confidence.bead_count >= 30
+
+
+def test_fit_raises_on_too_few_beads():
+    import pytest
+    from src.bead_grid import GridFitError
+    img = np.full((200, 200, 3), 235, dtype=np.uint8)  # no beads
+    with pytest.raises(GridFitError):
+        BeadGridFitter().fit(img)
