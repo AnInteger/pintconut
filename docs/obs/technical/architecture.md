@@ -14,10 +14,8 @@ status: active
 ```mermaid
 graph TB
     subgraph "检测流水线 (CLI)"
-        A["📷 输入照片"] --> B["BoardDetector<br>detect.py"]
-        B -->|"binary mask"| C["PerspectiveCorrector<br>grid.py"]
-        C -->|"warped image"| D["GridExtractor<br>grid.py"]
-        D -->|"RGB grid"| E["ColorMatcher<br>color.py"]
+        A["📷 输入照片"] --> B["BeadGridFitter<br>bead_grid.py"]
+        B -->|"cell grid"| E["ColorMatcher<br>color.py"]
         E --> F["DiffComparator<br>compare.py"]
         F --> G["❌ 标注结果"]
     end
@@ -36,16 +34,17 @@ graph TB
 
 ## 核心模块
 
-### BoardDetector (`src/detect.py`)
+### BeadGridFitter (`src/bead_grid.py`)
 
-拼板定位模块，使用 YOLOv8-seg 迁移学习模型。
+豆子网格驱动定位模块，取代独立的板子检测模型。通过检测豆子位置直接推导网格。
+
+**流程**：HoughCircles 检测豆子（暗环特征） → 估算网格轴线方向 → 两级标注（仿射默认 / 透视投影） → 解析网格尺寸和偏移 → 构建单元格网格 → 与图纸对比。
 
 | 方法 | 说明 | 返回 |
 |------|------|------|
-| `detect(image)` | 检测拼板区域 | 二值 mask 或 `None` |
-| `extract_corners(mask)` | 从 mask 提取 4 个角点 | `[TL, TR, BR, BL]` 或 `None` |
+| `fit(image, board_size=None)` | 从图像拟合豆子网格 | `GridResult` |
 
-角点排序算法：按 `x+y` 和 `y-x` 的极值定位四个方向角。
+`GridResult` 包含 `rows`、`cols`、`cells`（每个 cell 的颜色和位置）、`outline`（轮廓多边形）、`confidence`（拟合质量评分）和 `truncation`（截断信息）。
 
 ### PerspectiveCorrector (`src/grid.py`)
 
@@ -122,22 +121,14 @@ FastSAM 半自动标注核心逻辑。
 sequenceDiagram
     participant User
     participant CLI as cli.py
-    participant BD as BoardDetector
-    participant PC as PerspectiveCorrector
-    participant GE as GridExtractor
+    participant BGF as BeadGridFitter
     participant CM as ColorMatcher
     participant DC as DiffComparator
 
     User->>CLI: --photo + --blueprint
-    CLI->>BD: detect(photo)
-    BD-->>CLI: mask
-    CLI->>BD: extract_corners(mask)
-    BD-->>CLI: corners [TL,TR,BR,BL]
-    CLI->>PC: correct(photo, corners)
-    PC-->>CLI: corrected image
-    CLI->>GE: extract(corrected, rows, cols)
-    GE-->>CLI: photo_grid (R×C×3)
-    CLI->>CM: match_grid(photo_grid)
+    CLI->>BGF: fit(photo, board_size?)
+    BGF-->>CLI: GridResult (cells, outline, confidence)
+    CLI->>CM: match_grid(cells)
     CM-->>CLI: palette names
     Note over CLI: 同理提取 blueprint_grid
     CLI->>DC: compare(photo_grid, blueprint_grid)
@@ -165,7 +156,7 @@ sequenceDiagram
 
 ### Lazy Model Loading
 
-`BoardDetector`、`BeadDetector` 和 label UI 中的 FastSAM 都采用延迟加载：
+`BeadDetector` 和 label UI 中的 FastSAM 都采用延迟加载：
 
 ```python
 def _load_model(self):
@@ -184,20 +175,16 @@ def _load_model(self):
 - `_annotation_state` — 图片路径 → `"labeled"` / `"skipped"` / `None`
 - `_pending_selection` — 图片路径 → 用户选中的候选索引
 
-### 角点排序
+### Board-via-beads
 
-`BoardDetector._order_corners()` 使用数学性质排序：
-- `x+y` 最小 → 左上角
-- `y-x` 最小 → 右上角
-- `x+y` 最大 → 右下角
-- `y-x` 最大 → 左下角
+板子定位直接从检测到的豆子网格推导（`BeadGridFitter`），无需独立的板子检测模型。豆子级别检测（`BeadDetector`）仍用于逐豆任务。
 
 ## 文件结构
 
 ```
 src/
 ├── cli.py              # CLI 入口，编排完整流水线
-├── detect.py           # BoardDetector — 拼板检测 + 角点提取
+├── bead_grid.py        # BeadGridFitter — 豆子检测 + 网格编号
 ├── grid.py             # PerspectiveCorrector + GridExtractor
 ├── color.py            # ColorMatcher — 20 色盘 LAB 匹配
 ├── blueprint.py        # parse_blueprint — 图纸网格提取
@@ -214,7 +201,7 @@ data/
 
 tests/
 ├── conftest.py         # Playwright Gradio server fixture
-├── test_detect.py      # BoardDetector 单元测试
+├── test_bead_grid.py   # BeadGridFitter 单元测试
 ├── test_grid.py        # 透视校正 + 网格提取测试
 ├── test_color.py       # ColorMatcher 测试
 ├── test_blueprint.py   # 图纸解析测试
