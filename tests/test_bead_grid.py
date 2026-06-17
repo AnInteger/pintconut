@@ -37,6 +37,8 @@ def test_gridfiterror_is_exception():
 
 from tests._synth import synth_grid_centers, apply_homography, render_beads, make_beads
 
+from src.bead_grid import detect_beads
+
 
 def test_synth_grid_shape_and_spacing():
     pts = synth_grid_centers(rows=3, cols=4, spacing=20.0, origin=(10.0, 10.0))
@@ -60,3 +62,19 @@ def test_make_beads():
     beads = make_beads(synth_grid_centers(2, 2))
     assert len(beads) == 4
     assert beads[0].xy.shape == (2,)
+
+
+def test_detect_beads_finds_grid():
+    centers = synth_grid_centers(5, 5, spacing=30.0, origin=(40, 40))
+    img = render_beads(centers, img_size=(250, 250), bead_radius=10)
+    beads = detect_beads(img)
+    assert len(beads) >= 20
+    detected = np.array([b.xy for b in beads])
+    close = sum(1 for t in centers
+                if np.min(np.linalg.norm(detected - t, axis=1)) < 6.0)
+    assert close >= int(0.8 * len(centers))
+
+
+def test_detect_beads_empty_image():
+    img = np.full((100, 100, 3), 235, dtype=np.uint8)
+    assert detect_beads(img) == []
