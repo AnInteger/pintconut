@@ -8,7 +8,6 @@ import numpy as np
 import cv2
 
 from .bead_prelabel import hough_circles_to_boxes
-from .grid import CellInfo
 
 
 class GridFitError(Exception):
