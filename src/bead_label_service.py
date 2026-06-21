@@ -118,3 +118,15 @@ def generate_grid_boxes(corners, rows: int, cols: int) -> list[dict]:
             spacing = float(np.mean(dists)) if dists else 10.0
             boxes.append(_box_from_xy(xy, spacing * 0.4, "generated"))
     return boxes
+
+
+def preview_box_colors(image, boxes, color_matcher) -> list[dict]:
+    """Sample each box center's color and match to palette (for eval-preview overlay)."""
+    from .bead_grid import _sample_color
+    out = []
+    for b in boxes:
+        color = _sample_color(image, (b["cx"], b["cy"]))
+        m = color_matcher.match(color.tolist())
+        out.append({"xy": (float(b["cx"]), float(b["cy"])),
+                    "name": m["name"], "rgb": m["rgb"]})
+    return out

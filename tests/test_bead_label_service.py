@@ -97,3 +97,16 @@ def test_generate_grid_boxes_recovers_perspective_grid():
     # box width ~ local spacing(≈30) * 0.4 * 2 ≈ 24
     widths = [b["width"] for b in boxes]
     assert 10 < np.median(widths) < 40
+
+
+def test_preview_box_colors_returns_palette_entries():
+    from src.bead_label_service import preview_box_colors
+    from src.color import ColorMatcher
+    img = render_beads(synth_grid_centers(3, 3, spacing=40.0, origin=(40, 40)),
+                       img_size=(200, 200), bead_radius=12, body_color=(0, 0, 255))  # BGR 红
+    boxes = [{"cx": 40, "cy": 40, "xyxy": [28, 28, 52, 52],
+              "width": 24, "height": 24, "source": "generated", "id": 0}]
+    out = preview_box_colors(img, boxes, ColorMatcher())
+    assert len(out) == 1
+    assert {"xy", "name", "rgb"} <= set(out[0].keys())
+    assert isinstance(out[0]["name"], str)
