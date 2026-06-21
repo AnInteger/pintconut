@@ -1,7 +1,9 @@
 import os
 import numpy as np
 from tests._synth import synth_grid_centers, render_beads
-from src.bead_label_service import prelabel, holes_to_boxes, export_yolo
+from src.bead_label_service import prelabel, holes_to_boxes, export_yolo, match_cell_colors
+from src.color import ColorMatcher
+from src.bead_grid import BeadGridFitter
 
 
 def test_prelabel_full_grid():
@@ -61,3 +63,15 @@ def test_export_yolo_writes_valid_labels(tmp_path):
     parts = open(lbl_path).read().strip().split()
     assert parts[0] == "0"          # 单类别 bead
     assert len(parts) == 5          # class cx cy w h
+
+
+def test_match_cell_colors_returns_palette_entries():
+    centers = synth_grid_centers(5, 5, spacing=30.0, origin=(50, 50))
+    img = render_beads(centers, img_size=(250, 250), bead_radius=10,
+                       body_color=(0, 0, 255))   # BGR 红
+    res = BeadGridFitter().fit(img)
+    matched = match_cell_colors(res, ColorMatcher())
+    assert len(matched) > 0
+    m = matched[0]
+    assert {"row", "col", "xy", "name", "rgb"} <= set(m.keys())
+    assert isinstance(m["name"], str)

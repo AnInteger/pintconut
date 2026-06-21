@@ -77,3 +77,15 @@ def export_yolo(image: np.ndarray, boxes: list[dict], name: str,
     label_path = os.path.join(labels_dir, name + ".txt")
     save_yolo_boxes(boxes, w, h, label_path)
     return img_path, label_path, len(boxes)
+
+
+def match_cell_colors(result: GridResult, color_matcher) -> list[dict]:
+    """Map each visible cell's sampled color to a palette entry (for eval-preview overlay)."""
+    out: list[dict] = []
+    for c in result.cells:
+        if not c.is_visible or c.image_xy is None:
+            continue
+        m = color_matcher.match(c.color.tolist())
+        out.append({"row": c.row, "col": c.col, "xy": c.image_xy,
+                    "name": m["name"], "rgb": m["rgb"]})
+    return out
