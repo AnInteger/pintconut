@@ -165,3 +165,19 @@ def test_fit_raises_on_too_few_beads():
     img = np.full((200, 200, 3), 235, dtype=np.uint8)  # no beads
     with pytest.raises(GridFitError):
         BeadGridFitter().fit(img)
+
+
+def test_cellinfo_has_bead_default_false():
+    c = CellInfo(row=0, col=0, color=np.zeros(3, dtype=np.uint8),
+                 is_visible=True, is_edge=False, confidence=1.0)
+    assert c.has_bead is False
+
+
+def test_fit_sets_median_radius_and_has_bead():
+    from src.bead_grid import BeadGridFitter
+    centers = synth_grid_centers(5, 5, spacing=30.0, origin=(50, 50))
+    img = render_beads(centers, img_size=(250, 250), bead_radius=10)
+    res = BeadGridFitter().fit(img)
+    assert res.median_radius > 0
+    filled = [c for c in res.cells if c.has_bead]
+    assert len(filled) >= 20

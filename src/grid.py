@@ -101,6 +101,7 @@ class CellInfo:
     is_edge: bool              # Cell is near the truncation boundary
     confidence: float          # Comparison confidence for this cell [0, 1]
     image_xy: tuple[float, float] | None = None   # cell centre in original image
+    has_bead: bool = False     # True if a detected bead landed in this cell
 
 
 class GridExtractor:

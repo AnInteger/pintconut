@@ -67,6 +67,7 @@ class GridResult:
     outline: np.ndarray | None
     confidence: GridConfidence
     truncation: TruncationInfo
+    median_radius: float = 0.0
 
 
 MIN_BEADS = 20
@@ -311,7 +312,8 @@ def build_cells(image, beads, abs_labels, grid_map, rows, cols, truncation):
             is_edge = _is_edge_cell(r, c, rows, cols, truncation)
             conf = 0.5 if is_edge else (1.0 if is_visible else 0.0)
             cells.append(CellInfo(row=r, col=c, color=color, is_visible=is_visible,
-                                  is_edge=is_edge, confidence=conf, image_xy=image_xy))
+                                  is_edge=is_edge, confidence=conf, image_xy=image_xy,
+                                  has_bead=((r, c) in cell_bead)))
     return cells
 
 
@@ -335,6 +337,7 @@ class BeadGridFitter:
         beads = detect_beads(image)
         if len(beads) < MIN_BEADS:
             raise GridFitError(f"检出豆子太少({len(beads)})，无法分组")
+        median_radius = float(np.median([b.radius for b in beads]))
 
         d_row, d_col, spacing = estimate_grid_axes(beads)
         labels, persp = label_beads(beads, d_row, d_col, spacing)
@@ -351,4 +354,5 @@ class BeadGridFitter:
         ], dtype=np.float32)
 
         return GridResult(rows=rows, cols=cols, cells=cells, outline=outline,
-                          confidence=confidence, truncation=trunc)
+                          confidence=confidence, truncation=trunc,
+                          median_radius=median_radius)
