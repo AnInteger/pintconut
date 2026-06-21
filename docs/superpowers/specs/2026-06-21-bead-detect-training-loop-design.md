@@ -9,9 +9,11 @@
 
 ## 1. 背景与目标
 
-bead-grid 算法（`BeadGridFitter`）已在 `feat/bead-grid-detection` 分支落地，CLI 可产出「每个豆子的位置 + 颜色 + 与图纸的差异」。该算法的**第一步「检测豆子」目前用纯几何的 HoughCircles**，在真实随手拍上不稳：光照/角度一变就需要重新调参（最新提交 `test(bead_grid): real-photo regression set + tuned detection params` 即佐证），换张照片就可能漏检/多检。
+bead-grid 算法（`BeadGridFitter`）已在 `feat/bead-grid-detection` 分支**实现**，但**尚未在真实照片上端到端验证过 CLI**——需要先通过标注 UI 观察算法在真实照片上的实际输出，才能判断其效果与瓶颈。该算法的**第一步「检测豆子」目前用纯几何的 HoughCircles**，从调参经验看（最新提交 `test(bead_grid): real-photo regression set + tuned detection params`）在真实随手拍上偏脆弱：光照/角度一变就需要重新调参。**但是否真要训练检测器替换它，须等 UI 评估确认「检测」确实是真实照片上的主要失败点后再定**（见第 3 节阶段 1 的评估关卡）。
 
-**目标**：训练一个单类别（珠子）YOLOv8n 检测器，**只替换 bead-grid 算法里的 HoughCircles 这一步**，让真实照片上的豆子检测稳健可泛化。检测稳了，下游的网格拟合、LAB 采色、图纸差异比对自动跟着稳——整套「位置+颜色+差异」产品能力即可在真实照片上可靠工作。
+**目标（分两层）**：
+- **近期（确定要做的）**：把 bead-grid 算法接进标注 UI，使其成为**在真实照片上评估算法效果的主要界面**，同时顺带产出训练数据。
+- **远期（评估确认后才做）**：若 UI 评估证明「检测」是真实照片上的主要瓶颈，则训练一个单类别（珠子）YOLOv8n 检测器，**只替换 bead-grid 算法里的 HoughCircles 这一步**，让检测稳健可泛化；检测稳了，下游的网格拟合、LAB 采色、图纸差异比对自动跟着稳。
 
 **关键认知（决定范围）**：
 - **位置/行列**：由网格拟合算出，不是模型。
@@ -32,12 +34,13 @@ bead-grid 算法（`BeadGridFitter`）已在 `feat/bead-grid-detection` 分支�
 
 ## 3. 范围与分阶段
 
-本 spec 覆盖完整闭环，但实施按依赖顺序分阶段，**阶段 1（标注 UI）是当前唯一卡点，也是主工作量**：
+本 spec 覆盖完整闭环，但实施按依赖顺序分阶段。**阶段 1（标注 UI）是当前唯一卡点、主工作量，且身兼「评估算法」与「产训练数据」两职**：
 
 | 阶段 | 内容 | 产物 |
 |---|---|---|
-| **1. 标注 UI** | 重写标注 UI：bead-grid 预标注 + 网格辅助补漏 + 框编辑 + 导出 | 可产出干净 YOLO 标签 |
-| **2. 划分 + 训练** | train/valid 划分 → `bead_train.py` 训练 → `bead_validate.py` 验证 | `models/bead-best.pt` |
+| **1. 标注 UI（双重目的）** | 重写标注 UI：bead-grid 预标注 + 网格辅助补漏 + 框编辑 + 导出；同时作为**观察算法在真实照片上效果的界面**（见 4.3 评估预览） | 算法效果评估 + 可产出干净 YOLO 标签 |
+| **— 评估关卡 —** | 用 UI 在 5~10 张真实照片上观察算法输出，判断「检测」是否为主要失败点、HoughCircles 是否够用 | **决定是否进入阶段 2**（若 HoughCircles 已够好则跳过训练） |
+| **2. 划分 + 训练（条件性）** | 仅当评估关卡确认检测是瓶颈：train/valid 划分 → `bead_train.py` 训练 → `bead_validate.py` 验证 | `models/bead-best.pt` |
 | **3. 接缝接入** | `fit()` 加 `detector` 参数；`cli.py` 优先用训练好的检测器 | 真实照片上的位置+颜色+差异 |
 | **4. 主动学习迭代** | 失败照片回流重标重训（手工） | 检测质量收敛 |
 
@@ -76,6 +79,8 @@ bead-grid 算法（`BeadGridFitter`）已在 `feat/bead-grid-detection` 分支�
 4. **框编辑**：增加 / 删除 /（可选）移动或缩放框。
 5. **导出**按钮 → 写入 `bead_dataset/images/train` + `labels/train`，并刷新「已标注 N/总数」统计。
 6. **加载下一张未标注**（沿用现有逻辑）。
+
+**评估预览（UI 的第一职责）**：由于算法尚未在真实照片上验证，UI 要让用户能直观判断算法效果。预标注视图除框 + 网格外，**叠加每颗豆子/每个格子的 LAB 匹配色**（`fit()` 已产出 `CellInfo.color`，零额外成本）；可选再加「对照图纸看差异」入口（传 blueprint → 复用 `DiffComparator` 标不匹配格），此项非阶段 1 必需、可后置。
 
 **⚠️ 主要 UX 风险**：Gradio 原生框编辑交互较弱。实施阶段需先 spike 交互模型（候选：沿用 `label_ui.py` 的点选模式——点图删框、点空位+尺寸输入加框；或评估 `gr.ImageEditor` / 第三方标注组件）。网格叠加层必须清晰可见，因为「网格补漏」的可信度完全依赖网格是否正确。
 
@@ -124,6 +129,7 @@ bead-grid 算法（`BeadGridFitter`）已在 `feat/bead-grid-detection` 分支�
 ## 8. 验收标准
 
 - [ ] 标注 UI 可对真实照片预标注、网格补漏、人工校正、导出 YOLO 标签。
+- [ ] 标注 UI 可叠加显示每豆/每格匹配色，作为算法效果评估界面（支撑「评估关卡」决策）。
 - [ ] 导出数据经 `bead_split.py` 划分后，`bead_train.py` 可正常训练出 `bead-best.pt`。
 - [ ] `BeadGridFitter.fit(image, detector=...)` 可切换检测来源，单测验证下游不变。
 - [ ] `cli.py` 优先用训练好的检测器，在真实照片上产出「位置+颜色+差异」，质量优于 HoughCircles 基线。
