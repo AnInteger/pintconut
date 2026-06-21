@@ -116,6 +116,18 @@ def detect_beads(image: np.ndarray) -> list[Bead]:
     return beads
 
 
+def _beads_from_boxes(image: np.ndarray, boxes: list[dict]) -> list[Bead]:
+    """Convert detection boxes (cx/cy/width/height) into Bead objects (center + color + radius)."""
+    beads: list[Bead] = []
+    for b in boxes:
+        cx, cy = int(b["cx"]), int(b["cy"])
+        r = float(max(b["width"], b["height"]) / 2.0)
+        color = _sample_color(image, (cx, cy), half=max(1, int(r / 3)))
+        beads.append(Bead(xy=np.array([cx, cy], dtype=np.float64),
+                          color=color, radius=r))
+    return beads
+
+
 def estimate_grid_axes(beads: list[Bead]) -> tuple[np.ndarray, np.ndarray, float]:
     """Estimate oriented row/col unit axes + spacing from bead centres (vector voting)."""
     from scipy.spatial import cKDTree
@@ -333,8 +345,12 @@ def evaluate_confidence(beads, cells, rows, cols, perspective_tier, grid_map):
 class BeadGridFitter:
     """Detects the bead grid directly from beads (no board model)."""
 
-    def fit(self, image: np.ndarray, board_size: tuple[int, int] | None = None) -> GridResult:
-        beads = detect_beads(image)
+    def fit(self, image: np.ndarray, board_size: tuple[int, int] | None = None,
+            detector=None) -> GridResult:
+        if detector is not None:
+            beads = _beads_from_boxes(image, detector.detect(image))
+        else:
+            beads = detect_beads(image)
         if len(beads) < MIN_BEADS:
             raise GridFitError(f"检出豆子太少({len(beads)})，无法分组")
         median_radius = float(np.median([b.radius for b in beads]))

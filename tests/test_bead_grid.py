@@ -181,3 +181,19 @@ def test_fit_sets_median_radius_and_has_bead():
     assert res.median_radius > 0
     filled = [c for c in res.cells if c.has_bead]
     assert len(filled) >= 20
+
+
+def test_fit_uses_injected_detector():
+    from src.bead_grid import BeadGridFitter
+    centers = synth_grid_centers(5, 5, spacing=30.0, origin=(50, 50))
+    img = render_beads(centers, img_size=(250, 250), bead_radius=10)
+
+    class FakeDetector:
+        def detect(self, image):
+            return [{"xyxy": [int(x) - 10, int(y) - 10, int(x) + 10, int(y) + 10],
+                     "cx": int(x), "cy": int(y), "width": 20, "height": 20, "conf": 1.0}
+                    for x, y in centers]
+
+    res = BeadGridFitter().fit(img, detector=FakeDetector())
+    assert res.rows == 5 and res.cols == 5
+    assert sum(1 for c in res.cells if c.has_bead) == 25
