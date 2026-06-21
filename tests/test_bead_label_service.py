@@ -1,6 +1,7 @@
+import os
 import numpy as np
 from tests._synth import synth_grid_centers, render_beads
-from src.bead_label_service import prelabel
+from src.bead_label_service import prelabel, holes_to_boxes, export_yolo
 
 
 def test_prelabel_full_grid():
@@ -34,3 +35,29 @@ def test_prelabel_degraded_when_too_few_beads():
     assert r.fit_ok is False
     assert r.holes == []
     assert len(r.boxes) >= 5
+
+
+def test_holes_to_boxes_marks_autofill():
+    holes = [{"row": 2, "col": 2, "xy": (110.0, 110.0), "radius": 10.0}]
+    boxes = holes_to_boxes(holes)
+    assert len(boxes) == 1
+    b = boxes[0]
+    assert b["source"] == "autofill"
+    assert b["cx"] == 110 and b["cy"] == 110
+    assert b["width"] == 20 and b["height"] == 20
+
+
+def test_export_yolo_writes_valid_labels(tmp_path):
+    img = render_beads(synth_grid_centers(5, 5, spacing=30.0, origin=(50, 50)),
+                       img_size=(250, 250), bead_radius=10)
+    boxes = [{"xyxy": [10, 10, 30, 30], "cx": 20, "cy": 20,
+              "width": 20, "height": 20, "source": "detect"}]
+    images_dir = tmp_path / "images" / "train"
+    labels_dir = tmp_path / "labels" / "train"
+    img_path, lbl_path, n = export_yolo(img, boxes, "shot1",
+                                        str(images_dir), str(labels_dir))
+    assert n == 1
+    assert os.path.exists(img_path) and os.path.exists(lbl_path)
+    parts = open(lbl_path).read().strip().split()
+    assert parts[0] == "0"          # 单类别 bead
+    assert len(parts) == 5          # class cx cy w h

@@ -58,3 +58,22 @@ def prelabel(image: np.ndarray) -> PrelabelResult:
         med = float(np.median([b.radius for b in beads])) if beads else 0.0
         return PrelabelResult(boxes=boxes, median_radius=med, holes=[],
                               result=None, fit_ok=False)
+
+
+def holes_to_boxes(holes: list[dict]) -> list[dict]:
+    """Convert predicted hole positions into autofill boxes (source='autofill')."""
+    return [_box_from_xy(h["xy"], h["radius"], "autofill") for h in holes]
+
+
+def export_yolo(image: np.ndarray, boxes: list[dict], name: str,
+                images_dir: str, labels_dir: str) -> tuple[str, str, int]:
+    """Write image (jpg) + YOLO detection labels (single class 0). Returns (img_path, label_path, n)."""
+    import os
+    os.makedirs(images_dir, exist_ok=True)
+    os.makedirs(labels_dir, exist_ok=True)
+    h, w = image.shape[:2]
+    img_path = os.path.join(images_dir, name + ".jpg")
+    cv2.imwrite(img_path, image)
+    label_path = os.path.join(labels_dir, name + ".txt")
+    save_yolo_boxes(boxes, w, h, label_path)
+    return img_path, label_path, len(boxes)
