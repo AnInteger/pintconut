@@ -47,12 +47,12 @@ def _stats():
     return f"数据集: {n} 张已标注 / {len(_list_photos())} 张照片"
 
 
-def _box_label(i, b):
-    return f"#{i} {b['source']} @({b['cx']},{b['cy']})"
+def _box_label(b):
+    return f"#{b['id']} {b['source']} @({b['cx']},{b['cy']})"
 
 
 def _choices(state):
-    return [_box_label(i, b) for i, b in enumerate(state["boxes"])]
+    return [_box_label(b) for b in state["boxes"]]
 
 
 def _draw(state, show_color):
@@ -75,7 +75,19 @@ def _draw(state, show_color):
 
 
 def _new_state(img_bgr=None, name=""):
-    return {"img_bgr": img_bgr, "boxes": [], "holes": [], "result": None, "name": name}
+    return {"img_bgr": img_bgr, "boxes": [], "holes": [], "result": None,
+            "name": name, "next_id": 0}
+
+
+def _stamp_ids(next_id: int, boxes: list[dict]) -> tuple[list[dict], int]:
+    """Assign each box a unique stable 'id'; return (new_boxes, next_id)."""
+    out = []
+    for b in boxes:
+        nb = dict(b)
+        nb["id"] = next_id
+        next_id += 1
+        out.append(nb)
+    return out, next_id
 
 
 def h_load(name, state):
@@ -92,9 +104,8 @@ def h_prelabel(state, show_color):
     if img is None:
         return None, state, "❌ 请先加载照片", gr.update(), _stats()
     r = prelabel(img)
-    state["boxes"] = r.boxes
-    state["holes"] = r.holes
-    state["result"] = r.result
+    boxes, nid = _stamp_ids(state.get("next_id", 0), r.boxes)
+    state = {**state, "boxes": boxes, "holes": r.holes, "result": r.result, "next_id": nid}
     if r.fit_ok:
         msg = f"✅ 检出 {len(r.boxes)} 颗；可补漏 {len(r.holes)} 处"
     else:
@@ -105,15 +116,15 @@ def h_prelabel(state, show_color):
 def h_autofill(state, show_color):
     if not state.get("holes"):
         return _draw(state, show_color), state, "⚠️ 无可补漏（先预标注）", gr.update(), _stats()
-    state["boxes"].extend(holes_to_boxes(state["holes"]))
-    state["holes"] = []
+    new_boxes, nid = _stamp_ids(state.get("next_id", 0), holes_to_boxes(state["holes"]))
+    state = {**state, "boxes": state["boxes"] + new_boxes, "holes": [], "next_id": nid}
     return _draw(state, show_color), state, f"✅ 已补漏，共 {len(state['boxes'])} 个框", gr.update(choices=_choices(state)), _stats()
 
 
 def h_delete(state, sel, show_color):
     sel = sel or []
-    keep = [b for i, b in enumerate(state["boxes"]) if _box_label(i, b) not in sel]
-    state["boxes"] = keep
+    keep = [b for b in state["boxes"] if _box_label(b) not in sel]
+    state = {**state, "boxes": keep}
     return _draw(state, show_color), state, f"剩余 {len(keep)} 个框", gr.update(choices=_choices(state)), _stats()
 
 
@@ -124,8 +135,10 @@ def h_add_click(evt, state, radius, show_color):
     x, y = evt.index
     cx, cy = int(round(x)), int(round(y))
     r = int(radius)
-    state["boxes"].append({"xyxy": [cx - r, cy - r, cx + r, cy + r],
-                           "cx": cx, "cy": cy, "width": 2 * r, "height": 2 * r, "source": "manual"})
+    manual = [{"xyxy": [cx - r, cy - r, cx + r, cy + r],
+               "cx": cx, "cy": cy, "width": 2 * r, "height": 2 * r, "source": "manual"}]
+    new_boxes, nid = _stamp_ids(state.get("next_id", 0), manual)
+    state = {**state, "boxes": state["boxes"] + new_boxes, "next_id": nid}
     return _draw(state, show_color), state, gr.update(choices=_choices(state))
 
 
