@@ -89,3 +89,32 @@ def match_cell_colors(result: GridResult, color_matcher) -> list[dict]:
         out.append({"row": c.row, "col": c.col, "xy": c.image_xy,
                     "name": m["name"], "rgb": m["rgb"]})
     return out
+
+
+def generate_grid_boxes(corners, rows: int, cols: int) -> list[dict]:
+    """4 corner-bead image positions (TL,TR,BR,BL) + dims -> all bead boxes via homography.
+
+    Each box is sized to its local spacing (mean distance to existing neighbors) * 0.4,
+    so box size adapts under perspective. Raises cv2.error if the 4 corners are degenerate.
+    """
+    corners = np.asarray(corners, dtype=np.float32)
+    src = np.array([[0, 0], [cols - 1, 0], [cols - 1, rows - 1], [0, rows - 1]],
+                   dtype=np.float32)
+    H = cv2.getPerspectiveTransform(src, corners)  # maps grid (c,r) -> image (x,y)
+    centers = {}
+    for r in range(rows):
+        for c in range(cols):
+            v = H @ np.array([c, r, 1.0])
+            centers[(r, c)] = v[:2] / v[2]
+    boxes = []
+    for r in range(rows):
+        for c in range(cols):
+            xy = centers[(r, c)]
+            dists = []
+            for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                nb = centers.get((r + dr, c + dc))
+                if nb is not None:
+                    dists.append(float(np.linalg.norm(nb - xy)))
+            spacing = float(np.mean(dists)) if dists else 10.0
+            boxes.append(_box_from_xy(xy, spacing * 0.4, "generated"))
+    return boxes

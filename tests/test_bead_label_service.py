@@ -75,3 +75,25 @@ def test_match_cell_colors_returns_palette_entries():
     m = matched[0]
     assert {"row", "col", "xy", "name", "rgb"} <= set(m.keys())
     assert isinstance(m["name"], str)
+
+
+def test_generate_grid_boxes_recovers_perspective_grid():
+    from tests._synth import synth_grid_centers, apply_homography
+    from src.bead_label_service import generate_grid_boxes
+    rows, cols = 10, 10
+    centers = synth_grid_centers(rows, cols, spacing=30.0, origin=(40, 40))
+    H = np.array([[1.2, 0.1, 10], [0.05, 1.1, 5], [0.0003, 0.0002, 1.0]], dtype=np.float64)
+    warped = apply_homography(centers, H)  # ground-truth bead positions under perspective
+    # 4 corner beads: TL(0,0), TR(0,cols-1), BR(rows-1,cols-1), BL(rows-1,0)
+    corners = np.array([warped[0], warped[cols - 1], warped[rows * cols - 1],
+                        warped[(rows - 1) * cols]], dtype=np.float32)
+    boxes = generate_grid_boxes(corners, rows, cols)
+    assert len(boxes) == rows * cols
+    assert all(b["source"] == "generated" for b in boxes)
+    # row-major order matches synth_grid_centers → compare centers directly
+    gen_xy = np.array([[b["cx"], b["cy"]] for b in boxes])
+    err = np.linalg.norm(gen_xy - warped, axis=1)
+    assert err.max() < 1.0   # 4-point homography is exact for planar perspective
+    # box width ~ local spacing(≈30) * 0.4 * 2 ≈ 24
+    widths = [b["width"] for b in boxes]
+    assert 10 < np.median(widths) < 40
