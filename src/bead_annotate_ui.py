@@ -167,8 +167,8 @@ def h_generate(state, rows, cols, show_color):
         return _draw(state, show_color), state, gr.update(), "❌ 板尺寸太小（rows/cols ≥ 2）"
     try:
         boxes = generate_grid_boxes(np.array(corners, dtype=np.float32), rows_i, cols_i)
-    except cv2.error:
-        return _draw(state, show_color), state, gr.update(), "❌ 4 颗角豆共线，请重置后重新点"
+    except (cv2.error, ValueError):
+        return _draw(state, show_color), state, gr.update(), "❌ 4 颗角豆共线或重复，请重置后重新点"
     nb, nid = _stamp_ids(state.get("next_id", 0), boxes)
     state = {**state, "boxes": nb, "next_id": nid, "rows": rows_i, "cols": cols_i}
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), f"✅ 生成 {len(nb)} 颗豆位"
