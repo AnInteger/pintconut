@@ -1,0 +1,135 @@
+<h2>真实尺寸 v3 · 平实文案 + 安静马赛克</h2>
+<p class="subtitle">文案去口号化（工具感），主按钮改 Count，马赛克调单色细颗粒慢速。</p>
+
+<style>
+  .rs { display:flex; flex-direction:column; align-items:center; gap:30px; margin-top:10px }
+  .cap { font-size:12px; font-weight:800; color:#1A1033; letter-spacing:.3px }
+  .cap span { color:#7C3AED }
+  .phone390 { width:390px; background:#FFFBF7; border-radius:46px; overflow:hidden; box-shadow:0 26px 60px rgba(26,16,51,.18); position:relative; font-family:-apple-system,system-ui,'Segoe UI',sans-serif; color:#1A1033 }
+  .status { height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 28px }
+  .status .t { font-size:16px; font-weight:700 }
+  .bat i { display:inline-block; width:25px; height:12px; border:1.5px solid #1A1033; border-radius:3px; position:relative }
+  .bat i b { position:absolute; inset:1.5px; width:70%; background:#1A1033; border-radius:1px }
+  .bat i::after { content:''; position:absolute; right:-3px; top:3px; width:2px; height:4px; background:#1A1033; border-radius:0 1px 1px 0 }
+
+  /* 安静马赛克：单色、细颗粒、慢速 */
+  .mosaic {
+    background-image: radial-gradient(circle at 50% 50%, #7C3AED 0 38%, transparent 39%);
+    background-size:6px 6px;
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent;
+    animation:flow 10s linear infinite;
+  }
+  @keyframes flow{to{background-position:36px 36px}}
+
+  .beads {
+    background-color:#FFF1F5;
+    background-image:
+      radial-gradient(circle at 50% 50%, #EC4899 0 22%, transparent 23%),
+      radial-gradient(circle at 50% 50%, #7C3AED 0 22%, transparent 23%),
+      radial-gradient(circle at 50% 50%, #F59E0B 0 22%, transparent 23%),
+      radial-gradient(circle at 50% 50%, #10B981 0 22%, transparent 23%);
+    background-size:12px 12px; background-position:0 0, 6px 0, 0 6px, 6px 6px;
+  }
+  .b1 { background-color:#FFF1F5; background-image:radial-gradient(circle at 50% 50%, #EC4899 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #F472B6 0 30%, transparent 31%); background-size:11px 11px; background-position:0 0, 5.5px 5.5px }
+  .b2 { background-color:#FFF7E6; background-image:radial-gradient(circle at 50% 50%, #F59E0B 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #10B981 0 30%, transparent 31%); background-size:11px 11px; background-position:0 0, 5.5px 5.5px }
+  .b3 { background-color:#EFF6FF; background-image:radial-gradient(circle at 50% 50%, #38BDF8 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #7C3AED 0 30%, transparent 31%); background-size:11px 11px; background-position:0 0, 5.5px 5.5px }
+  .chev-r { width:9px; height:9px; border-right:2.5px solid #fff; border-top:2.5px solid #fff; transform:rotate(45deg); display:inline-block; margin-left:8px }
+</style>
+
+<div class="rs">
+
+<!-- ============ 首页 v3 ============ -->
+<div>
+  <div class="cap"><span>首页</span> · v3</div>
+  <div class="phone390" style="margin-top:8px">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div style="padding:6px 20px 0">
+      <div style="display:flex;align-items:center;gap:9px;margin:6px 0 28px">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#EC4899)"></div>
+        <b style="font-size:17px;font-weight:800">Pintcount</b>
+      </div>
+
+      <!-- 平实 hero -->
+      <div class="mosaic" style="font-size:34px;font-weight:900;line-height:1.1;letter-spacing:-.6px">拼豆质检</div>
+      <div style="font-size:15px;font-weight:600;color:#6B5B8A;margin:12px 0 28px;line-height:1.5">熨烫之前，拍一张对照图纸，标出错豆。</div>
+
+      <!-- 主按钮 Count -->
+      <div style="background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;box-shadow:0 12px 24px rgba(124,58,237,.28)">Count<span class="chev-r"></span></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:36px 0 14px">
+        <span style="font-size:13px;font-weight:800;letter-spacing:1px;color:#6B5B8A;text-transform:uppercase">最近作品</span>
+        <span style="font-size:13px;font-weight:800;color:#7C3AED">全部</span>
+      </div>
+    </div>
+
+    <div style="overflow:hidden">
+      <div style="display:flex;gap:12px;padding:0 20px 6px;width:max-content">
+        <div style="width:150px;flex-shrink:0">
+          <div class="b1" style="height:150px;border-radius:18px;position:relative"><div style="position:absolute;left:10px;bottom:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px">3 错</div></div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">草莓熊 · 29×29</div>
+          <div style="font-size:11px;color:#6B5B8A">昨天</div>
+        </div>
+        <div style="width:150px;flex-shrink:0">
+          <div class="b2" style="height:150px;border-radius:18px;position:relative"><div style="position:absolute;left:10px;bottom:10px;background:#10B981;color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px">通过</div></div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">向日葵 · 20×20</div>
+          <div style="font-size:11px;color:#6B5B8A">3 天前</div>
+        </div>
+        <div style="width:150px;flex-shrink:0">
+          <div class="b3" style="height:150px;border-radius:18px;position:relative"><div style="position:absolute;left:10px;bottom:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px">1 错</div></div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">海浪 · 29×29</div>
+          <div style="font-size:11px;color:#6B5B8A">上周</div>
+        </div>
+        <div style="width:40px;flex-shrink:0"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:22px;border-top:1px solid #F0EAF6;padding:12px 20px 8px;display:flex;justify-content:space-around">
+      <div style="text-align:center;color:#7C3AED"><div style="width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#7C3AED,#EC4899);margin:0 auto 5px"></div><div style="font-size:11px;font-weight:800">首页</div></div>
+      <div style="text-align:center;color:#B4A8C9"><div style="width:24px;height:24px;margin:0 auto 5px;display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px"><span style="background:#D6C9EC;border-radius:2px"></span><span style="background:#D6C9EC;border-radius:2px"></span><span style="background:#D6C9EC;border-radius:2px"></span><span style="background:#D6C9EC;border-radius:2px"></span></div><div style="font-size:11px;font-weight:700">作品库</div></div>
+      <div style="text-align:center;color:#B4A8C9"><div style="width:24px;height:24px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center"><div style="width:20px;height:20px;border:2.5px solid #D6C9EC;border-radius:50%"></div></div><div style="font-size:11px;font-weight:700">设置</div></div>
+    </div>
+    <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:130px;height:5px;border-radius:3px;background:#1A1033;opacity:.85"></div></div>
+  </div>
+</div>
+
+<!-- ============ 结果页 v3 ============ -->
+<div>
+  <div class="cap"><span>结果页</span> · v3</div>
+  <div class="phone390" style="margin-top:8px">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+      <div style="display:flex;align-items:center;gap:10px"><div style="width:11px;height:11px;border-left:2.5px solid #1A1033;border-bottom:2.5px solid #1A1033;transform:rotate(45deg);margin-right:3px"></div><b style="font-size:17px;font-weight:800">检测结果</b></div>
+      <span style="font-size:15px;font-weight:800;color:#7C3AED">重扫</span>
+    </div>
+
+    <div style="padding:12px 20px 0">
+      <div class="beads" style="height:268px;border-radius:20px;position:relative">
+        <div style="position:absolute;left:20%;top:24%;width:42px;height:42px;border:3px solid #EF4444;border-radius:7px;box-shadow:0 0 0 3px rgba(239,68,68,.22)"><div style="position:absolute;right:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #FFFBF7">1</div></div>
+        <div style="position:absolute;left:55%;top:48%;width:42px;height:42px;border:3px solid #EF4444;border-radius:7px;box-shadow:0 0 0 3px rgba(239,68,68,.22)"><div style="position:absolute;right:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #FFFBF7">2</div></div>
+        <div style="position:absolute;left:37%;top:70%;width:36px;height:36px;border:3px dashed #EF4444;border-radius:6px"><div style="position:absolute;right:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #FFFBF7">3</div></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+        <div style="background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;font-size:14px;font-weight:800;padding:7px 14px;border-radius:999px">3 处错误</div>
+        <span style="font-size:13px;color:#6B5B8A;font-weight:600">2 颜色错 · 1 空缺</span>
+      </div>
+
+      <div style="background:#F8F5FC;border-radius:20px;padding:6px 16px;margin-top:14px">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 0"><span style="width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</span><div style="flex:1"><div style="font-size:15px;font-weight:800">颜色错 · 5 行 12 格</div></div><span style="font-size:12px;color:#6B5B8A">应为 A · 实为 B</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 0"><span style="width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</span><div style="flex:1"><div style="font-size:15px;font-weight:800">颜色错 · 8 行 5 格</div></div><span style="font-size:12px;color:#6B5B8A">应为 A · 实为 C</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 0"><span style="width:22px;height:22px;border-radius:50%;background:#EF4444;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</span><div style="flex:1"><div style="font-size:15px;font-weight:800">空缺 · 8 行 3 格</div></div><span style="font-size:12px;color:#6B5B8A">该位置缺豆</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;padding:14px 20px 8px;box-shadow:0 -10px 24px rgba(26,16,51,.05)">
+      <div style="text-align:center;font-size:14px;font-weight:700;color:#6B5B8A;margin-bottom:10px">保存</div>
+      <div style="background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;text-align:center;border-radius:16px;height:54px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;box-shadow:0 12px 24px rgba(124,58,237,.28)">分享</div>
+    </div>
+    <div style="height:22px;display:flex;align-items:center;justify-content:center"><div style="width:130px;height:5px;border-radius:3px;background:#1A1033;opacity:.85"></div></div>
+  </div>
+</div>
+
+</div>
