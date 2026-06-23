@@ -130,3 +130,56 @@ def preview_box_colors(image, boxes, color_matcher) -> list[dict]:
         out.append({"xy": (float(b["cx"]), float(b["cy"])),
                     "name": m["name"], "rgb": m["rgb"]})
     return out
+
+
+def gradient_magnitude(img: np.ndarray) -> np.ndarray:
+    """Sobel gradient magnitude of a BGR image (single-channel)."""
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    return cv2.magnitude(gx, gy)
+
+
+def _ring_profile(sample: np.ndarray, cx, cy, r_min=3, r_max=120, n_ang=120):
+    """Mean of `sample` along each circle of radius r (radial profile)."""
+    H, W = sample.shape
+    ang = np.linspace(0, 2 * np.pi, n_ang, endpoint=False)
+    cos, sin = np.cos(ang), np.sin(ang)
+    prof = []
+    for r in range(r_min, r_max + 1):
+        xs = np.round(cx + r * cos).astype(int)
+        ys = np.round(cy + r * sin).astype(int)
+        ok = (xs >= 0) & (ys >= 0) & (xs < W) & (ys < H)
+        prof.append(float(sample[ys[ok], xs[ok]].mean()) if ok.sum() > n_ang * 0.6 else 0.0)
+    return np.array(prof), list(range(r_min, r_max + 1))
+
+
+def find_bead_radius(gmag: np.ndarray, cx, cy, prior_radii=None,
+                     r_min=3, r_max=120) -> tuple[int, bool]:
+    """Edge radius from a center click. Returns (radius, warn).
+
+    Algorithm (validated on user ground truth gt_NYQC4978.txt, 11/12 within 6px):
+      1. grad_outer: outermost radial-gradient ring above 0.6*peak (skips highlights).
+      2. clamp to [0.8, 1.2]*median(prior_radii) once >=3 priors exist (kills ballooning).
+      3. warn=True when the pre-clamp candidate hit floor/ceiling AND no clamp ran.
+    """
+    prof, rs = _ring_profile(gmag, cx, cy, r_min, r_max)
+    peak = float(prof.max()) if prof.size else 0.0
+    if peak <= 0:
+        return r_min, True
+    thr = 0.6 * peak
+    outer = r_min
+    for k in range(1, len(prof) - 1):
+        if prof[k] > thr and prof[k] >= prof[k - 1] and prof[k] >= prof[k + 1]:
+            outer = rs[k]          # keep updating -> outermost local max above thr
+    candidate = outer if outer > r_min else rs[int(np.argmax(prof))]
+
+    hit_bound = candidate <= r_min + 2 or candidate >= 0.85 * r_max
+
+    radii = list(prior_radii or [])
+    if len(radii) >= 3:
+        med = float(np.median(radii))
+        candidate = float(np.clip(candidate, 0.8 * med, 1.2 * med))
+        return int(round(candidate)), False
+
+    return int(round(candidate)), bool(hit_bound)
