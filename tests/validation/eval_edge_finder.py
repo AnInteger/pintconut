@@ -30,7 +30,7 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from src.bead_label_service import gradient_magnitude, find_bead_radius, _ring_profile
+from src.bead_label_service import gradient_magnitude, find_bead_radius, ring_profile
 
 IMG_DEFAULT = "training/test_images/training/1/NYQC4978.png"
 GT_DEFAULT = "tests/validation/gt_NYQC4978.txt"
@@ -50,28 +50,8 @@ def load_gt(path):
 
 def find_radius_gradient(gmag, cx, cy, r_min=3, r_max=120):
     """Strongest gradient ring (baseline). Fails on highlights."""
-    prof, rs = _ring_profile(gmag, cx, cy, r_min, r_max)
+    prof, rs = ring_profile(gmag, cx, cy, r_min, r_max)
     return rs[int(np.argmax(prof))] if prof.max() > 0 else r_min
-
-
-def find_radius_gradient_outer(gmag, cx, cy, r_min=3, r_max=120):
-    """Raw grad_outer baseline (NO clamp) — the un-clamped half of production.
-
-    Production's find_bead_radius = this outer-ring logic + a [0.8, 1.2]*median
-    clamp. We keep this thin wrapper so the baseline table can show how much of
-    PRIMARY's error is the clamp fixing ballooning vs. the raw ring pick.
-    Ring profiling itself is the single-source _ring_profile from the service.
-    """
-    prof, rs = _ring_profile(gmag, cx, cy, r_min, r_max)
-    peak = prof.max()
-    if peak <= 0:
-        return r_min
-    thr = 0.6 * peak
-    outer = r_min
-    for k in range(1, len(prof) - 1):
-        if prof[k] > thr and prof[k] >= prof[k - 1] and prof[k] >= prof[k + 1]:
-            outer = rs[k]
-    return outer if outer > r_min else rs[int(np.argmax(prof))]
 
 
 def find_radius_coverage(gmag, cx, cy, r_min=3, r_max=120, n_ang=120, cov_thr=0.5):
@@ -156,7 +136,7 @@ def run_method(name, img, gmag, gt):
         if name == "gradient":
             r_algo = find_radius_gradient(gmag, cx, cy)
         elif name == "grad_outer":
-            r_algo = find_radius_gradient_outer(gmag, cx, cy)
+            r_algo = find_bead_radius(gmag, cx, cy)[0]
         elif name == "coverage":
             r_algo = find_radius_coverage(gmag, cx, cy)
         else:
@@ -227,7 +207,7 @@ def main():
             for _ in range(5):
                 a = random.uniform(0, 2 * np.pi)
                 jx, jy = cx + d * np.cos(a), cy + d * np.sin(a)
-                r_algo = find_radius_gradient_outer(gmag, jx, jy)
+                r_algo = find_bead_radius(gmag, jx, jy)[0]
                 j_io.append(iou(box(jx, jy, r_algo), box(cx, cy, r_gt)))
                 j_re.append(abs(r_algo - r_gt))
         print(f"    +-{d}px -> IoU median={med(j_io):.2f} mean={statistics.mean(j_io):.2f} | |dR| median={med(j_re):.2f}")
