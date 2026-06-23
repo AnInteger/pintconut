@@ -140,7 +140,7 @@ def gradient_magnitude(img: np.ndarray) -> np.ndarray:
     return cv2.magnitude(gx, gy)
 
 
-def _ring_profile(sample: np.ndarray, cx, cy, r_min=3, r_max=120, n_ang=120):
+def ring_profile(sample: np.ndarray, cx, cy, r_min=3, r_max=120, n_ang=120):
     """Mean of `sample` along each circle of radius r (radial profile)."""
     H, W = sample.shape
     ang = np.linspace(0, 2 * np.pi, n_ang, endpoint=False)
@@ -163,7 +163,7 @@ def find_bead_radius(gmag: np.ndarray, cx, cy, prior_radii=None,
       2. clamp to [0.8, 1.2]*median(prior_radii) once >=3 priors exist (kills ballooning).
       3. warn=True when the pre-clamp candidate hit floor/ceiling AND no clamp ran.
     """
-    prof, rs = _ring_profile(gmag, cx, cy, r_min, r_max)
+    prof, rs = ring_profile(gmag, cx, cy, r_min, r_max)
     peak = float(prof.max()) if prof.size else 0.0
     if peak <= 0:
         return r_min, True
