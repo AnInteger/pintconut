@@ -114,7 +114,8 @@ def _draw(state, show_color):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
     for b in state["boxes"]:
         x1, y1, x2, y2 = b["xyxy"]
-        cv2.rectangle(disp, (x1, y1), (x2, y2), SRC_BGR.get(b["source"], (255, 255, 255)), 2)
+        color = (0, 0, 255) if b.get("warn") else SRC_BGR.get(b["source"], (255, 255, 255))
+        cv2.rectangle(disp, (x1, y1), (x2, y2), color, 2)
     return cv2.cvtColor(disp, cv2.COLOR_BGR2RGB)
 
 
@@ -140,7 +141,7 @@ def h_reset(state, show_color):
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), "已重置角点与框"
 
 
-def h_click(evt: gr.SelectData, state, mode, radius, show_color):
+def h_click(evt: gr.SelectData, state, mode, show_color):
     img = state.get("img_bgr")
     if img is None or evt is None:
         return _draw(state, show_color), state, gr.update(), ""
@@ -155,12 +156,34 @@ def h_click(evt: gr.SelectData, state, mode, radius, show_color):
                 3: "④点左下角豆"}.get(n, "")
         msg = f"✅ 已点 {n}/4 角豆，可生成网格" if n == 4 else f"已点 {n}/4 角豆，下一颗：{hint}"
         return _draw(state, show_color), state, gr.update(), msg
+
+    # 点豆模式
+    gmag = state.get("gmag")
+    if gmag is None:
+        return _draw(state, show_color), state, gr.update(), "❌ 先加载照片"
     cx, cy = int(round(x)), int(round(y))
-    r = int(radius)
-    manual = [{"xyxy": [cx - r, cy - r, cx + r, cy + r],
-              "cx": cx, "cy": cy, "width": 2 * r, "height": 2 * r, "source": "manual"}]
-    nb, nid = _stamp_ids(state.get("next_id", 0), manual)
-    state = {**state, "boxes": state["boxes"] + nb, "next_id": nid}
+    pending = state.get("pending")
+    if pending:
+        pcx, pcy, _pr = pending
+        if ((cx - pcx) ** 2 + (cy - pcy) ** 2) ** 0.5 < _pr:
+            # 2nd click inside pending box → manual edge override
+            r = int(((cx - pcx) ** 2 + (cy - pcy) ** 2) ** 0.5)
+            boxes = list(state["boxes"])
+            last = dict(boxes[-1])
+            last.update({"xyxy": [pcx - r, pcy - r, pcx + r, pcy + r],
+                         "cx": pcx, "cy": pcy, "width": 2 * r, "height": 2 * r,
+                         "source": "manual", "warn": False})
+            boxes[-1] = last
+            state = {**state, "boxes": boxes, "pending": None}
+            return _draw(state, show_color), state, gr.update(choices=_choices(state)), "已手动覆盖半径"
+    # new bead center
+    prior = [b["width"] / 2 for b in state["boxes"]]
+    r, warn = find_bead_radius(gmag, cx, cy, prior_radii=prior or None)
+    nb, nid = _stamp_ids(state.get("next_id", 0), [{
+        "xyxy": [cx - r, cy - r, cx + r, cy + r], "cx": cx, "cy": cy,
+        "width": 2 * r, "height": 2 * r, "source": "auto", "warn": warn}])
+    state = {**state, "boxes": state["boxes"] + nb, "next_id": nid,
+             "pending": (cx, cy, r)}
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), ""
 
 
@@ -192,7 +215,7 @@ def h_export(state, name_override):
     if img is None:
         return "❌ 未加载照片", _stats()
     if not state["boxes"]:
-        return "❌ 无框可导出（先生成网格或加框）", _stats()
+        return "❌ 无框可导出（先生成网格或点豆）", _stats()
     name = (name_override or state.get("name") or "").strip()
     if not name:
         return "❌ 缺导出名", _stats()
@@ -209,8 +232,8 @@ def build_ui():
             "1. 加载照片 →「角点」模式依次点 4 颗角豆：①左上 ②右上 ③右下 ④左下"
             "（你要标的矩形范围的四个角）\n"
             "2. **rows/cols = 这个范围里实际的「行数×列数」豆子**（要和角豆位置对得上）\n"
-            "3.「生成网格」→ 单应矩阵算出全部豆位 →「加框」模式校正 → 导出\n\n"
-            "框色：🟢生成 / 🔵手动。"
+            "3.「生成网格」→ 单应矩阵算出全部豆位 →「点豆」模式校正 → 导出\n\n"
+            "框色：🟢生成/自动 / 🔵手动覆盖 / 🔴算法警示(点边缘覆盖)。点豆模式：点中心→自动框；再点同颗边缘→手动覆盖半径。"
         )
         state = gr.State(_new_state())
 
@@ -223,17 +246,16 @@ def build_ui():
                 with gr.Row():
                     rows_num = gr.Number(value=29, label="rows", precision=0)
                     cols_num = gr.Number(value=29, label="cols", precision=0)
-                mode = gr.Radio(["角点", "加框"], value="角点", label="点击模式")
+                mode = gr.Radio(["角点", "点豆"], value="角点", label="点击模式")
                 show_color = gr.Checkbox(value=True, label="叠加匹配色(评估)")
                 generate_btn = gr.Button("🎯 生成网格", variant="primary")
                 reset_btn = gr.Button("♻️ 重置角点/框")
                 box_list = gr.CheckboxGroup(choices=[], label="框列表 (勾选→删除)")
                 delete_btn = gr.Button("🗑️ 删除选中")
-                radius = gr.Number(value=10, label="加框半径(px, 仅加框模式)")
                 name_tb = gr.Textbox(label="导出名 (留空用照片名)")
                 export_btn = gr.Button("💾 导出 YOLO", variant="secondary")
             with gr.Column(scale=1):
-                canvas = gr.Image(label="标注画布 (角点模式=点角豆 / 加框模式=加框)", type="numpy")
+                canvas = gr.Image(label="标注画布 (角点模式=点角豆 / 点豆模式=点豆/覆盖)", type="numpy")
                 status = gr.Textbox(label="状态", interactive=False)
                 stats = gr.Textbox(label="统计", interactive=False)
 
@@ -244,7 +266,7 @@ def build_ui():
                            [canvas, state, box_list, status])
         reset_btn.click(h_reset, [state, show_color], [canvas, state, box_list, status])
         delete_btn.click(h_delete, [state, box_list, show_color], [canvas, state, box_list, status])
-        canvas.select(h_click, [state, mode, radius, show_color], [canvas, state, box_list, status])
+        canvas.select(h_click, [state, mode, show_color], [canvas, state, box_list, status])
         export_btn.click(h_export, [state, name_tb], [status, stats])
         app.load(fn=lambda: gr.update(choices=_list_photos()), outputs=photo)
         app.load(fn=_stats, outputs=stats)
