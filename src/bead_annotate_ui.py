@@ -138,7 +138,7 @@ def h_reset(state, show_color):
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), "已重置角点与框"
 
 
-def h_click(evt, state, mode, radius, show_color):
+def h_click(evt: gr.SelectData, state, mode, radius, show_color):
     img = state.get("img_bgr")
     if img is None or evt is None:
         return _draw(state, show_color), state, gr.update(), ""
@@ -148,7 +148,11 @@ def h_click(evt, state, mode, radius, show_color):
         if len(corners) < 4:
             corners.append((float(x), float(y)))
             state = {**state, "corners": corners}
-        return _draw(state, show_color), state, gr.update(), f"已点 {len(state['corners'])}/4 角豆"
+        n = len(state["corners"])
+        hint = {0: "①点左上角豆", 1: "②点右上角豆", 2: "③点右下角豆",
+                3: "④点左下角豆"}.get(n, "")
+        msg = f"✅ 已点 {n}/4 角豆，可生成网格" if n == 4 else f"已点 {n}/4 角豆，下一颗：{hint}"
+        return _draw(state, show_color), state, gr.update(), msg
     cx, cy = int(round(x)), int(round(y))
     r = int(radius)
     manual = [{"xyxy": [cx - r, cy - r, cx + r, cy + r],
@@ -196,9 +200,16 @@ def h_export(state, name_override):
 
 def build_ui():
     with gr.Blocks(title="Pintconut 珠子标注") as app:
-        gr.Markdown("# 🟡 Pintconut 珠子标注 (角点定位)\n"
-                    "加载 → 「角点」模式点 4 颗角豆(左上→右上→右下→左下) → 选板尺寸 → 生成网格 → "
-                    "「加框」模式校正 → 导出。框色：🟢生成 / 🔵手动。")
+        gr.Markdown(
+            "# 🟡 Pintconut 珠子标注 (角点定位)\n"
+            "**豆子永远排在矩形网格上**——图案再不规则，也只是「网格里哪些格子有豆」，"
+            "网格本身恒为矩形。所以你标的是**网格四角的豆子中心**，不是图案外形的角。\n\n"
+            "1. 加载照片 →「角点」模式依次点 4 颗角豆：①左上 ②右上 ③右下 ④左下"
+            "（你要标的矩形范围的四个角）\n"
+            "2. **rows/cols = 这个范围里实际的「行数×列数」豆子**（要和角豆位置对得上）\n"
+            "3.「生成网格」→ 单应矩阵算出全部豆位 →「加框」模式校正 → 导出\n\n"
+            "框色：🟢生成 / 🔵手动。"
+        )
         state = gr.State(_new_state())
 
         with gr.Row():
