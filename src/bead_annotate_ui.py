@@ -137,7 +137,7 @@ def h_preset(label):
 
 
 def h_reset(state, show_color):
-    state = {**state, "corners": [], "boxes": []}
+    state = {**state, "corners": [], "boxes": [], "pending": None}
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), "已重置角点与框"
 
 
@@ -199,14 +199,14 @@ def h_generate(state, rows, cols, show_color):
     except (cv2.error, ValueError):
         return _draw(state, show_color), state, gr.update(), "❌ 4 颗角豆共线或重复，请重置后重新点"
     nb, nid = _stamp_ids(state.get("next_id", 0), boxes)
-    state = {**state, "boxes": nb, "next_id": nid, "rows": rows_i, "cols": cols_i}
+    state = {**state, "boxes": nb, "next_id": nid, "rows": rows_i, "cols": cols_i, "pending": None}
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), f"✅ 生成 {len(nb)} 颗豆位"
 
 
 def h_delete(state, sel, show_color):
     sel = sel or []
     keep = [b for b in state["boxes"] if _box_label(b) not in sel]
-    state = {**state, "boxes": keep}
+    state = {**state, "boxes": keep, "pending": None}
     return _draw(state, show_color), state, gr.update(choices=_choices(state)), f"剩余 {len(keep)} 个框"
 
 

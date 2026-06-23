@@ -110,3 +110,42 @@ def test_h_load_sets_gmag(tmp_path, monkeypatch):
     assert state["gmag"] is not None
     assert state["gmag"].shape == (20, 20)
     assert state["pending"] is None
+
+
+def test_h_reset_clears_pending_no_crash():
+    from src.bead_annotate_ui import h_click, h_reset, _new_state
+    state = _new_state(img_bgr=np.zeros((120, 120, 3), dtype=np.uint8))
+    state["gmag"] = _gmag_ring(120, 60, 60, ring_r=15)
+    _, state, _, _ = h_click(_FakeSelectData(60.0, 60.0), state, "点豆", False)   # sets pending
+    assert state["pending"] is not None
+    _img, state, _bl, _s = h_reset(state, False)
+    assert state["pending"] is None
+    assert state["boxes"] == []
+    # previously: next 点豆 click IndexError'd on boxes[-1]; now it starts fresh
+    _, state2, _b, _s = h_click(_FakeSelectData(60.0, 60.0), state, "点豆", False)
+    assert len(state2["boxes"]) == 1
+
+
+def test_h_delete_clears_pending():
+    from src.bead_annotate_ui import h_click, h_delete, _new_state, _box_label
+    state = _new_state(img_bgr=np.zeros((160, 160, 3), dtype=np.uint8))
+    state["gmag"] = _gmag_ring(160, 60, 60, ring_r=15) + _gmag_ring(160, 110, 60, ring_r=15)
+    _, state, _, _ = h_click(_FakeSelectData(60.0, 60.0), state, "点豆", False)    # bead1
+    _, state, _, _ = h_click(_FakeSelectData(110.0, 60.0), state, "点豆", False)   # bead2 (pending)
+    assert len(state["boxes"]) == 2
+    sel = [_box_label(state["boxes"][1])]   # delete the pending bead
+    _img, state, _bl, _s = h_delete(state, sel, False)
+    assert state["pending"] is None          # was dangling before the fix
+    assert len(state["boxes"]) == 1
+
+
+def test_h_generate_clears_pending():
+    from src.bead_annotate_ui import h_click, h_generate, _new_state
+    state = _new_state(img_bgr=np.zeros((160, 160, 3), dtype=np.uint8), rows=4, cols=4)
+    state["gmag"] = _gmag_ring(160, 80, 80, ring_r=15)
+    _, state, _, _ = h_click(_FakeSelectData(80.0, 80.0), state, "点豆", False)   # stale pending
+    assert state["pending"] is not None
+    state["corners"] = [(20, 20), (140, 20), (140, 140), (20, 140)]
+    _img, state, _bl, _s = h_generate(state, 4, 4, False)
+    assert state["pending"] is None          # was dangling before the fix
+    assert len(state["boxes"]) == 16
