@@ -7,16 +7,22 @@ Reads only:
   - the photo (default NYQC4978.png)
   - tests/validation/gt_NYQC4978.txt   (your truth: "cx cy r" per bead)
 
-Three candidate edge-finders compared on the SAME truth (no cherry-picking):
+PRIMARY (the production algorithm — graded against truth):
+  find_bead_radius  : single-source-of-truth, imported from src.bead_label_service.
+               grad_outer (OUTERMOST radial-gradient ring above 0.6*peak; a
+               highlight is an INNER ring, the true edge is the OUTERMOST, so it
+               skips highlights) + radius clamp to [0.8, 1.2]*median(prior_radii)
+               once >=3 priors exist (kills ballooning). Prior = the OTHER beads'
+               true radii (best case: rest of board already labeled).
 
+Baselines in main's table (comparison only, NOT used in production):
   gradient   : strongest mean-Sobel-gradient ring. Fails on highlights
                (highlight<->red ring is strongest, at ~half the true radius).
-  saturation : outer boundary of the high-saturation region (Otsu threshold).
-               Fails HERE because red beads reflect onto the adjacent board,
-               making the board pink/high-saturation too.
-  grad_outer : OUTERMOST significant gradient ring (local maxima above 0.4*peak;
-               take the largest radius). A highlight is an INNER ring, the true
-               bead edge is the OUTERMOST ring, so this skips the highlight.
+  grad_outer : same grad_outer step, but UN-clamped (no prior) — shows what the
+               clamp rescues on pathological beads like #11.
+  coverage   : outermost radius whose circle is >50% edge-like pixels (85th-pct
+               threshold); distinguishes the true full-circle edge from a
+               neighbor's partial-arc edge.
 
 Deterministic (random.seed(42)). Usage:
     python tests/validation/eval_edge_finder.py [image] [gt.txt]
@@ -136,6 +142,7 @@ def run_method(name, img, gmag, gt):
         if name == "gradient":
             r_algo = find_radius_gradient(gmag, cx, cy)
         elif name == "grad_outer":
+            # no prior_radii -> clamp skipped -> raw (un-clamped) grad_outer baseline
             r_algo = find_bead_radius(gmag, cx, cy)[0]
         elif name == "coverage":
             r_algo = find_radius_coverage(gmag, cx, cy)
