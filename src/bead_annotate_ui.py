@@ -13,7 +13,8 @@ import cv2
 import gradio as gr
 import numpy as np
 
-from src.bead_label_service import generate_grid_boxes, preview_box_colors, export_yolo
+from src.bead_label_service import (generate_grid_boxes, preview_box_colors, export_yolo,
+                                    gradient_magnitude, find_bead_radius)
 from src.color import ColorMatcher
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -80,7 +81,7 @@ def _choices(state):
 
 def _new_state(img_bgr=None, name="", rows=29, cols=29):
     return {"img_bgr": img_bgr, "boxes": [], "corners": [], "rows": rows, "cols": cols,
-            "name": name, "next_id": 0}
+            "name": name, "next_id": 0, "gmag": None, "pending": None}
 
 
 def _stamp_ids(next_id: int, boxes: list[dict]) -> tuple[list[dict], int]:
@@ -123,6 +124,7 @@ def h_load(name, state):
     if img is None:
         return None, _new_state(), f"❌ 读不到 {name}", gr.update(), _stats()
     state = _new_state(img, os.path.splitext(name)[0])
+    state["gmag"] = gradient_magnitude(img)
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB), state, f"✅ 已加载 {name}", gr.update(choices=_choices(state)), _stats()
 
 

@@ -8,6 +8,7 @@ and `evt.index` blew up.
 """
 import inspect
 
+import cv2
 import numpy as np
 from gradio.events import EventData
 
@@ -64,3 +65,13 @@ def test_h_click_box_mode_adds_manual_box():
     assert b["source"] == "manual"
     assert b["cx"] == 200 and b["cy"] == 150
     assert b["width"] == 24 and b["height"] == 24   # 2 * radius(12)
+
+
+def test_h_load_sets_gmag(tmp_path, monkeypatch):
+    import src.bead_annotate_ui as ui
+    monkeypatch.setattr(ui, "PHOTOS_DIR", str(tmp_path))
+    cv2.imwrite(str(tmp_path / "t.png"), np.zeros((20, 20, 3), dtype=np.uint8))
+    _img, state, _status, _bl, _st = ui.h_load("t.png", ui._new_state())
+    assert state["gmag"] is not None
+    assert state["gmag"].shape == (20, 20)
+    assert state["pending"] is None
