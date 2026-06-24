@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>结果（有错）· Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .idx-num { width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .n-color { background: var(--err-color); }
+  .n-missing { background: var(--err-missing); }
+  .n-extra { background: var(--err-extra); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>结果 · 有错</span> · 多色标记（红=颜色错 / 蓝=空缺 / 橙=多余）· 核心流</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="chev"></div><div class="title">检测结果</div></div>
+      <a class="action" href="capture.html" style="text-decoration:none">重扫</a>
+    </div>
+
+    <div style="padding:12px 20px 0">
+      <!-- 成品图 + 多色编号标记 -->
+      <div class="beads" style="height:268px;border-radius:var(--r-card);position:relative">
+        <div class="mark mark-color" style="left:20%;top:22%;width:42px;height:42px"><div class="num">1</div></div>
+        <div class="mark mark-color" style="left:55%;top:46%;width:42px;height:42px"><div class="num">2</div></div>
+        <div class="mark mark-missing" style="left:37%;top:68%;width:38px;height:38px"><div class="num">3</div></div>
+        <div class="mark mark-extra" style="left:72%;top:30%;width:38px;height:38px"><div class="num">4</div></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+        <span class="pill">4 处错误</span>
+        <span class="muted" style="font-size:13px;font-weight:600">2 颜色错 · 1 空缺 · 1 多余</span>
+      </div>
+
+      <!-- 错误索引（软底面板，图与清单为索引关系） -->
+      <div class="soft-panel" style="margin-top:14px;margin-bottom:18px">
+        <div class="row">
+          <span class="idx-num n-color">1</span>
+          <div style="flex:1"><div style="font-size:var(--fs-body);font-weight:800">颜色错 · 5 行 12 格</div></div>
+          <span class="muted" style="font-size:12px">应为草莓红 · 实为深紫</span>
+        </div>
+        <div class="row">
+          <span class="idx-num n-color">2</span>
+          <div style="flex:1"><div style="font-size:var(--fs-body);font-weight:800">颜色错 · 8 行 5 格</div></div>
+          <span class="muted" style="font-size:12px">应为奶白 · 实为叶绿</span>
+        </div>
+        <div class="row">
+          <span class="idx-num n-missing">3</span>
+          <div style="flex:1"><div style="font-size:var(--fs-body);font-weight:800">空缺 · 8 行 3 格</div></div>
+          <span class="muted" style="font-size:12px">该位置缺豆</span>
+        </div>
+        <div class="row">
+          <span class="idx-num n-extra">4</span>
+          <div style="flex:1"><div style="font-size:var(--fs-body);font-weight:800">多余 · 11 行 9 格</div></div>
+          <span class="muted" style="font-size:12px">图纸要求空</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底栏：无「保存」（自动保存）；重扫 + 分享 -->
+    <div style="padding:14px 20px 8px;box-shadow:var(--sh-lift)">
+      <a class="btn-text" href="capture.html" style="text-align:center;display:block;text-decoration:none;margin-bottom:10px">重扫</a>
+      <a class="btn btn-primary" href="share.html" style="text-decoration:none">分享</a>
+    </div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>检测中 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .spinner { width: 56px; height: 56px; border-radius: 50%; border: 5px solid var(--line); border-top-color: var(--brand-a); animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .step { display: flex; align-items: center; gap: 12px; padding: 12px 0; font-size: var(--fs-body); font-weight: 700; color: var(--muted); }
+  .step .mk { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+  .step.done .mk { background: var(--success); }
+  .step.done { color: var(--ink); }
+  .step.active .mk { border: 3px solid var(--brand-a); background: transparent; }
+  .step.active { color: var(--brand-a); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>检测中</span> · 用户语言步骤（无 CV 术语）· 核心流</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div style="padding:80px 28px 0;text-align:center">
+      <div class="spinner" style="margin:0 auto 28px"></div>
+      <div style="font-size:var(--fs-h1);font-weight:800;margin-bottom:40px">正在逐格比对</div>
+
+      <div style="text-align:left;display:inline-block;min-width:200px">
+        <div class="step done"><span class="mk"></span>对齐拼板</div>
+        <div class="step done"><span class="mk"></span>读取每格颜色</div>
+        <div class="step active"><span class="mk"></span>与图纸比对</div>
+      </div>
+    </div>
+
+    <div style="height:120px"></div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

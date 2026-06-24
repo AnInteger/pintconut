@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分享卡片 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .card { background: var(--bg-surface); border-radius: var(--r-card); box-shadow: var(--sh-card); overflow: hidden; }
+  .share-row { display: flex; justify-content: space-around; padding: 18px 0 6px; }
+  .share-row .item { text-align: center; color: var(--muted); font-size: 12px; font-weight: 700; }
+  .share-row .ic { width: 52px; height: 52px; border-radius: 16px; background: var(--bg-soft); margin: 0 auto 8px; display:flex;align-items:center;justify-content:center; color: var(--brand-a); font-weight:800; font-size:18px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>分享卡片</span> · 品牌水印 · 核心流</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="chev"></div><div class="title">分享</div></div>
+    </div>
+
+    <div style="padding:12px 20px 0">
+      <!-- 卡片预览 -->
+      <div class="card">
+        <div class="b1" style="height:170px;position:relative">
+          <div style="position:absolute;left:12px;top:12px" class="badge badge-err">4 处错误</div>
+        </div>
+        <div style="padding:16px 18px 18px">
+          <div style="font-size:var(--fs-h1);font-weight:800">草莓熊</div>
+          <div class="muted" style="font-size:var(--fs-caption);margin-top:4px">29 × 29 · Perler 色盘</div>
+
+          <div style="margin-top:14px;display:flex;align-items:center;gap:9px;padding-top:14px;border-top:1px solid var(--line)">
+            <div class="brand-mark" style="width:22px;height:22px;border-radius:6px"></div>
+            <span style="font-size:12px;font-weight:800;color:var(--brand-a)">用 Pintcount 一键质检</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin:24px 0 6px">分享到</div>
+      <div class="share-row">
+        <div class="item"><div class="ic">红</div>小红书</div>
+        <div class="item"><div class="ic">微</div>微信</div>
+        <div class="item"><div class="ic">⤓</div>保存</div>
+        <div class="item"><div class="ic">···</div>更多</div>
+      </div>
+      <div class="muted" style="font-size:11px;text-align:center;margin:10px 0 24px">实际调用系统分享表单</div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

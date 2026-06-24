@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>拍照 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* 取景器专属 */
+  .vf { position: relative; height: 560px; background: #2A2342; overflow: hidden; }
+  .vf .board { position: absolute; inset: 70px 30px; border-radius: 10px; opacity: .9; }
+  .corner { position: absolute; width: 30px; height: 30px; border: 4px solid var(--brand-b); }
+  .corner.tl { top: 60px; left: 20px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+  .corner.tr { top: 60px; right: 20px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+  .corner.bl { bottom: 60px; left: 20px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+  .corner.br { bottom: 60px; right: 20px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+  .locked { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(124,58,237,.9); color:#fff; font-size:12px; font-weight:800; padding:6px 14px; border-radius:999px; }
+  .shutter { width: 74px; height: 74px; border-radius: 50%; background: var(--grad-brand); border: 5px solid #fff; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>拍照</span> · 自动锁定拼板 · 核心流</div>
+
+  <div class="phone">
+    <div class="status" style="color:#fff"><span class="t">9:41</span><span class="bat"><i style="border-color:#fff"><b style="background:#fff"></b></i></span></div>
+
+    <div class="vf">
+      <div class="board beads"></div>
+      <div class="locked">已锁定拼板</div>
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    </div>
+
+    <div style="background:#1A1033;padding:22px 20px 26px;display:flex;align-items:center;justify-content:space-around">
+      <span style="color:#fff;font-size:13px;font-weight:700">从相册选</span>
+      <a href="processing.html" class="shutter" style="display:block;text-decoration:none"></a>
+      <span style="color:#fff;font-size:13px;font-weight:700">翻转</span>
+    </div>
+    <div class="home-bar" style="background:#1A1033"></div>
+  </div>
+</div>
+</body>
+</html>

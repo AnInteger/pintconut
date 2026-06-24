@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首页 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>首页</span> · 核心流</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div style="padding:6px 20px 0">
+      <div class="lockup" style="margin:6px 0 28px">
+        <div class="brand-mark"></div><b>Pintcount</b>
+      </div>
+
+      <div style="font-size:var(--fs-display);font-weight:900;line-height:1.1;letter-spacing:-.6px">拼豆质检</div>
+      <div style="font-size:var(--fs-body);font-weight:600;color:var(--muted);margin:12px 0 28px;line-height:1.5">熨烫之前，拍一张对照图纸，标出错豆。</div>
+
+      <a class="btn btn-primary" href="blueprint.html">Count<span class="chev-r"></span></a>
+
+      <div class="row-between" style="margin:36px 0 14px">
+        <span class="section-label">最近作品</span>
+        <a href="gallery.html" style="font-size:var(--fs-label);font-weight:800;color:var(--brand-a);text-decoration:none">全部</a>
+      </div>
+    </div>
+
+    <div style="overflow:hidden">
+      <div style="display:flex;gap:12px;padding:0 20px 6px;width:max-content">
+        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
+          <div class="b1" style="height:150px;border-radius:18px;position:relative">
+            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-err">3 错</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">草莓熊 · 29×29</div>
+          <div style="font-size:11px;color:var(--muted)">昨天</div>
+        </a>
+        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
+          <div class="b2" style="height:150px;border-radius:18px;position:relative">
+            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-ok">通过</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">向日葵 · 20×20</div>
+          <div style="font-size:11px;color:var(--muted)">3 天前</div>
+        </a>
+        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
+          <div class="b3" style="height:150px;border-radius:18px;position:relative">
+            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-err">1 错</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;margin-top:8px">海浪 · 29×29</div>
+          <div style="font-size:11px;color:var(--muted)">上周</div>
+        </a>
+        <div style="width:40px;flex-shrink:0"></div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab on"><div class="ic ic-home"></div><div class="lb">首页</div></div>
+      <a class="tab" href="gallery.html" style="text-decoration:none"><div class="ic ic-gallery"><span></span><span></span><span></span><span></span></div><div class="lb">作品库</div></a>
+      <a class="tab" href="settings.html" style="text-decoration:none"><div class="ic ic-settings"></div><div class="lb">设置</div></a>
+    </div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>
