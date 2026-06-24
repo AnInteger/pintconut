@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品详情 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .hist { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .hist .badge-mini { width: 28px; height: 28px; border-radius: 8px; display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>作品详情</span> · 历次检测 + 重扫（跳过图纸）· 简略</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="chev"></div><div class="title">草莓熊</div></div>
+    </div>
+
+    <div style="padding:10px 20px 0">
+      <div class="b1" style="height:200px;border-radius:var(--r-card);position:relative">
+        <div style="position:absolute;left:12px;top:12px" class="badge badge-err">4 错</div>
+      </div>
+
+      <div class="section-label" style="margin:22px 0 6px">历次检测</div>
+      <div class="soft-panel">
+        <div class="hist">
+          <div class="badge-mini" style="background:var(--err-color)">4 错</div>
+          <div style="flex:1;font-size:var(--fs-body);font-weight:700">2 颜色错 · 1 空缺 · 1 多余</div>
+          <span class="muted" style="font-size:11px">今天</span>
+        </div>
+        <div class="hist">
+          <div class="badge-mini" style="background:var(--err-color)">7 错</div>
+          <div style="flex:1;font-size:var(--fs-body);font-weight:700">修豆前</div>
+          <span class="muted" style="font-size:11px">昨天</span>
+        </div>
+        <div class="hist">
+          <div class="badge-mini" style="background:var(--success)">通过</div>
+          <div style="flex:1;font-size:var(--fs-body);font-weight:700">初版拼完</div>
+          <span class="muted" style="font-size:11px">前天</span>
+        </div>
+      </div>
+
+      <div class="muted" style="font-size:11px;margin-top:14px;line-height:1.5">图纸已随作品保留，重扫无需再导入。</div>
+    </div>
+
+    <div style="padding:22px 20px 0">
+      <a class="btn btn-primary" href="capture.html" style="text-decoration:none">重扫</a>
+    </div>
+
+    <div style="height:60px"></div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

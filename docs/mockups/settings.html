@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>设置 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .grp-label { font-size: var(--fs-label); font-weight: 800; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin: 22px 4px 8px; }
+  .grp { background: var(--bg-surface); border-radius: var(--r-card); overflow: hidden; box-shadow: 0 4px 14px rgba(26,16,51,.05); }
+  .grp .it { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; }
+  .grp .it + .it { border-top: 1px solid var(--line); }
+  .grp .it .lb { font-size: var(--fs-body); font-weight: 700; }
+  .grp .it .v { font-size: 13px; color: var(--muted); }
+  .sel { display:inline-flex;align-items:center;gap:6px;color:var(--brand-a);font-weight:800;font-size:13px; }
+  .sel::after { content:'✓'; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>设置</span> · 色盘品牌 · 简略</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav"><div class="left"><div class="title" style="margin-left:0">设置</div></div></div>
+
+    <div style="padding:0 20px">
+      <div class="grp-label">色盘品牌</div>
+      <div class="grp">
+        <div class="it"><span class="lb">Perler</span><span class="sel">默认</span></div>
+        <div class="it"><span class="lb">Hama</span><span class="v">切换</span></div>
+        <div class="it"><span class="lb">Artkal</span><span class="v">切换</span></div>
+      </div>
+      <div class="muted" style="font-size:11px;margin:8px 4px">也可在导入图纸时即时切换。</div>
+
+      <div class="grp-label">关于</div>
+      <div class="grp">
+        <div class="it"><span class="lb">版本</span><span class="v">1.0.0</span></div>
+        <div class="it"><span class="lb">给 Pintcount 评分</span><span class="v">›</span></div>
+      </div>
+
+      <div class="grp-label">隐私</div>
+      <div class="grp">
+        <div class="it"><span class="lb">照片全程不出手机</span><span class="v">已启用</span></div>
+        <div class="it"><span class="lb">隐私说明</span><span class="v">›</span></div>
+      </div>
+    </div>
+
+    <div style="height:60px"></div>
+    <div class="tabbar">
+      <a class="tab" href="home.html" style="text-decoration:none"><div class="ic ic-home"></div><div class="lb">首页</div></a>
+      <a class="tab" href="gallery.html" style="text-decoration:none"><div class="ic ic-gallery"><span></span><span></span><span></span><span></span></div><div class="lb">作品库</div></a>
+      <div class="tab on"><div class="ic ic-settings"></div><div class="lb">设置</div></div>
+    </div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>解析低置信度 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .warn-card { background: #FFF7E6; border-radius: var(--r-card); padding: 20px; text-align: center; }
+  .warn-ic { width: 44px; height: 44px; border-radius: 50%; background: var(--err-extra); margin: 0 auto 14px; display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>解析 · 低置信度</span> · 温和提示，无手动工具 · 边界</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="chev"></div><div class="title">图纸</div></div>
+      <div class="action">换一张</div>
+    </div>
+
+    <div style="padding:12px 20px 0">
+      <!-- 模糊/不清晰的图纸预览 -->
+      <div class="b3" style="height:180px;border-radius:var(--r-card);opacity:.45;filter:blur(.5px);margin-bottom:18px"></div>
+
+      <div class="warn-card">
+        <div class="warn-ic">!</div>
+        <div style="font-size:var(--fs-body);font-weight:800">图纸不太清晰</div>
+        <div class="muted" style="font-size:13px;margin-top:6px;line-height:1.5">没能准确识别网格。建议重选一张，或重新截一张清晰的图。</div>
+      </div>
+
+      <a class="btn btn-primary" href="blueprint.html" style="margin-top:22px;text-decoration:none">重选图纸</a>
+
+      <div class="muted" style="font-size:11px;text-align:center;margin-top:16px;line-height:1.5">
+        Pintcount 靠自动识别，暂不提供手动框选——<br>换一张更清晰的图通常就好。
+      </div>
+    </div>
+
+    <div style="height:80px"></div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

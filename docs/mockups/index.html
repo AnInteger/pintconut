@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pintcount 原型 · 索引</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 64px; }
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .head h1 { font-size: 28px; font-weight: 900; letter-spacing: -.5px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 8px 0 32px; line-height: 1.6; }
+  .grp-h { display:flex; align-items:center; gap:10px; font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--brand-a); text-transform: uppercase; margin: 30px 0 14px; }
+  .grp-h .line { flex:1; height:1px; background: var(--line); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  a.card { display:block; background: var(--bg-surface); border-radius: var(--r-card); padding: 16px 18px; text-decoration:none; color: var(--ink); box-shadow: 0 6px 18px rgba(26,16,51,.06); transition: transform .15s, box-shadow .15s; }
+  a.card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(124,58,237,.16); }
+  a.card .n { font-size: 11px; font-weight: 800; color: var(--brand-a); letter-spacing: 1px; }
+  a.card h3 { font-size: 16px; font-weight: 800; margin: 6px 0 4px; }
+  a.card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .sw { width: 12px; height: 12px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div class="brand-mark" style="width:34px;height:34px;border-radius:10px"></div><h1>Pintcount 原型</h1></div>
+  <div class="sub">基于 v1.4 PRD 的静态原型。点击进入各屏；核心魔法流建议按顺序走一遍。<br>多色错误标记：颜色错=红 · 空缺=蓝 · 多余=橙。</div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--err-color)"></span>颜色错</span>
+    <span><span class="sw" style="background:var(--err-missing)"></span>空缺</span>
+    <span><span class="sw" style="background:var(--err-extra)"></span>多余</span>
+  </div>
+
+  <div class="grp-h"><span>核心魔法流</span><span class="line"></span><span style="color:var(--muted)">建议走查顺序</span></div>
+  <div class="grid">
+    <a class="card" href="home.html"><div class="n">① 首页</div><h3>Home</h3><p>Count 入口 · 最近作品</p></a>
+    <a class="card" href="blueprint.html"><div class="n">② 选图纸</div><h3>Blueprint</h3><p>解析成功 · 备豆统计 · 选色盘</p></a>
+    <a class="card" href="capture.html"><div class="n">③ 拍照</div><h3>Capture</h3><p>自动锁定拼板</p></a>
+    <a class="card" href="processing.html"><div class="n">④ 检测中</div><h3>Processing</h3><p>用户语言步骤（无 CV 术语）</p></a>
+    <a class="card" href="results.html"><div class="n">⑤ 结果·有错</div><h3>Results</h3><p>多色标记 · 无保存按钮</p></a>
+    <a class="card" href="results-pass.html"><div class="n">⑥ 结果·通过</div><h3>Results · Pass</h3><p>0 错净图 · 质检通过</p></a>
+    <a class="card" href="share.html"><div class="n">⑦ 分享</div><h3>Share</h3><p>品牌水印卡片</p></a>
+  </div>
+
+  <div class="grp-h"><span>作品库 · 设置</span><span class="line"></span></div>
+  <div class="grid">
+    <a class="card" href="gallery.html"><div class="n">作品库</div><h3>Gallery</h3><p>列表 · 自动保存</p></a>
+    <a class="card" href="gallery-detail.html"><div class="n">作品详情</div><h3>Detail</h3><p>历次检测 · 重扫</p></a>
+    <a class="card" href="settings.html"><div class="n">设置</div><h3>Settings</h3><p>色盘品牌 · 隐私</p></a>
+  </div>
+
+  <div class="grp-h"><span>边界态</span><span class="line"></span><span style="color:var(--muted)">无手动逃生舱</span></div>
+  <div class="grid">
+    <a class="card" href="first-run.html"><div class="n">首启</div><h3>First Run</h3><p>相机/相册权限</p></a>
+    <a class="card" href="blueprint-lowconf.html"><div class="n">图纸</div><h3>Low Confidence</h3><p>图纸不清晰 · 重选</p></a>
+    <a class="card" href="unsupported.html"><div class="n">图纸</div><h3>Unsupported</h3><p>不支持场景 · 明确提示</p></a>
+    <a class="card" href="detection-failed.html"><div class="n">拍照</div><h3>Detection Failed</h3><p>没认出来 · 重拍引导</p></a>
+  </div>
+</div>
+</body>
+</html>

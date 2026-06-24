@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>检测失败 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .tip { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .tip .b { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-a); margin-top: 7px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>检测 · 失败</span> · 重拍引导，无手动校正 · 边界</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="chev"></div><div class="title">检测结果</div></div>
+    </div>
+
+    <div style="padding:24px 20px 0;text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-soft);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;font-size:28px">?</div>
+      <div style="font-size:var(--fs-h1);font-weight:800">没认出来</div>
+      <div class="muted" style="font-size:13px;margin-top:8px;line-height:1.5">没能从照片里认出拼板。按下面几点重拍一张：</div>
+    </div>
+
+    <div style="padding:20px 20px 0">
+      <div class="soft-panel">
+        <div class="tip"><span class="b"></span>把整块拼板完整拍进来</div>
+        <div class="tip"><span class="b"></span>正对拍摄，避免倾斜</div>
+        <div class="tip"><span class="b"></span>均匀打光，减少反光</div>
+      </div>
+    </div>
+
+    <div style="padding:24px 20px 0">
+      <a class="btn btn-primary" href="capture.html" style="text-decoration:none">重新拍摄</a>
+    </div>
+
+    <div style="height:80px"></div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

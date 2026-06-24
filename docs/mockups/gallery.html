@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品库 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .gcard { display: flex; gap: 14px; align-items: center; padding: 14px 0; }
+  .gcard .thumb { width: 78px; height: 78px; border-radius: 16px; flex-shrink: 0; position: relative; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>作品库</span> · 列表（检测完成自动保存）· 简略</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div class="nav">
+      <div class="left"><div class="title" style="margin-left:0">作品库</div></div>
+    </div>
+
+    <div style="padding:6px 20px 0">
+      <div class="muted" style="font-size:12px;margin-bottom:6px">检测完成的作品会自动保存在这里</div>
+
+      <a href="gallery-detail.html" class="gcard" style="text-decoration:none;color:inherit">
+        <div class="thumb b1"><div style="position:absolute;left:8px;bottom:8px" class="badge badge-err">4 错</div></div>
+        <div style="flex:1">
+          <div style="font-size:var(--fs-body);font-weight:800">草莓熊</div>
+          <div class="muted" style="font-size:12px;margin-top:3px">29 × 29 · Perler</div>
+          <div class="muted" style="font-size:11px;margin-top:3px">今天 · 最近一次</div>
+        </div>
+        <div style="color:var(--inactive);font-size:18px">›</div>
+      </a>
+
+      <a href="gallery-detail.html" class="gcard" style="text-decoration:none;color:inherit">
+        <div class="thumb b2"><div style="position:absolute;left:8px;bottom:8px" class="badge badge-ok">通过</div></div>
+        <div style="flex:1">
+          <div style="font-size:var(--fs-body);font-weight:800">向日葵</div>
+          <div class="muted" style="font-size:12px;margin-top:3px">20 × 20 · Perler</div>
+          <div class="muted" style="font-size:11px;margin-top:3px">3 天前</div>
+        </div>
+        <div style="color:var(--inactive);font-size:18px">›</div>
+      </a>
+
+      <a href="gallery-detail.html" class="gcard" style="text-decoration:none;color:inherit">
+        <div class="thumb b3"><div style="position:absolute;left:8px;bottom:8px" class="badge badge-err">1 错</div></div>
+        <div style="flex:1">
+          <div style="font-size:var(--fs-body);font-weight:800">海浪</div>
+          <div class="muted" style="font-size:12px;margin-top:3px">29 × 29 · Artkal</div>
+          <div class="muted" style="font-size:11px;margin-top:3px">上周</div>
+        </div>
+        <div style="color:var(--inactive);font-size:18px">›</div>
+      </a>
+    </div>
+
+    <div style="height:60px"></div>
+    <div class="tabbar">
+      <a class="tab" href="home.html" style="text-decoration:none"><div class="ic ic-home"></div><div class="lb">首页</div></a>
+      <div class="tab on"><div class="ic ic-gallery"><span></span><span></span><span></span><span></span></div><div class="lb">作品库</div></div>
+      <a class="tab" href="settings.html" style="text-decoration:none"><div class="ic ic-settings"></div><div class="lb">设置</div></a>
+    </div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

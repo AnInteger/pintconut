@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首启权限 · Pintcount 原型</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .perm { display: flex; align-items: flex-start; gap: 14px; padding: 16px 0; }
+  .perm .ic { width: 40px; height: 40px; border-radius: var(--r-chip); background: var(--chip); flex-shrink: 0; display:flex;align-items:center;justify-content:center;color:var(--brand-a);font-weight:800; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="back" href="index.html">← 返回索引</a>
+  <div class="cap"><span>首启 · 权限</span> · 开 App 时申请相机/相册 · 边界</div>
+
+  <div class="phone">
+    <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
+
+    <div style="padding:40px 24px 0;text-align:center">
+      <div class="brand-mark" style="margin:0 auto 18px;width:44px;height:44px;border-radius:12px"></div>
+      <div style="font-size:var(--fs-h1);font-weight:800">欢迎使用 Pintcount</div>
+      <div class="muted" style="font-size:var(--fs-body);margin:10px 0 28px;line-height:1.5">需要以下权限才能拍照质检。照片全程留在本机，不会上传。</div>
+    </div>
+
+    <div style="padding:0 24px">
+      <div class="soft-panel">
+        <div class="perm">
+          <div class="ic">CAM</div>
+          <div style="flex:1">
+            <div style="font-size:var(--fs-body);font-weight:800">相机</div>
+            <div class="muted" style="font-size:12px;margin-top:2px">拍摄拼豆成品照进行质检</div>
+          </div>
+          <span class="pill" style="background:var(--chip);color:var(--brand-a)">允许</span>
+        </div>
+        <div class="perm">
+          <div class="ic">IMG</div>
+          <div style="flex:1">
+            <div style="font-size:var(--fs-body);font-weight:800">照片</div>
+            <div class="muted" style="font-size:12px;margin-top:2px">导入图纸、保存作品到相册</div>
+          </div>
+          <span class="pill" style="background:var(--chip);color:var(--brand-a)">允许</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:30px 24px 0">
+      <a class="btn btn-primary" href="home.html" style="text-decoration:none">允许并开始</a>
+    </div>
+
+    <div style="height:120px"></div>
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>
