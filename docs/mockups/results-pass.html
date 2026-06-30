@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>结果（通过）· Pintcount 原型</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+  .stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-8deg); border: 3px solid var(--success); color: var(--success); background: rgba(16,185,129,.14); font-size: 26px; font-weight: 900; padding: 12px 22px; border-radius: 14px; letter-spacing: 3px; line-height: 1.1; text-align: center; box-shadow: 0 6px 18px rgba(16,185,129,.20); }
+  .ok-badge { width: 46px; height: 46px; border-radius: 50%; background: var(--success); color: #fff; font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px rgba(16,185,129,.35); }
+</style>
 </head>
 <body>
 <div class="stage">
@@ -20,12 +24,17 @@
     </div>
 
     <div style="padding:12px 20px 0">
-      <!-- 净图：无标记 -->
-      <div class="b2" style="height:268px;border-radius:var(--r-card);position:relative"></div>
+      <!-- 净图 + 质检合格印章 -->
+      <div class="b2" style="height:268px;border-radius:var(--r-card);position:relative">
+        <div class="stamp">质检<br>合格</div>
+      </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin:18px 0 6px">
-        <span class="pill pill-success">质检通过</span>
-        <span class="muted" style="font-size:13px;font-weight:600">0 处错误，可以熨烫了</span>
+      <div style="display:flex;align-items:center;gap:14px;margin:18px 0 6px">
+        <div class="ok-badge">✓</div>
+        <div>
+          <div style="font-size:var(--fs-h1);font-weight:800;line-height:1.1">质检通过</div>
+          <div class="muted" style="font-size:13px;margin-top:2px">0 处错误，可以熨烫了</div>
+        </div>
       </div>
 
       <div class="soft-panel" style="margin-top:14px;margin-bottom:22px">

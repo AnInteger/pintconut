@@ -14,6 +14,16 @@
   .step.done { color: var(--ink); }
   .step.active .mk { border: 3px solid var(--brand-a); background: transparent; }
   .step.active { color: var(--brand-a); }
+  /* 正在扫描的成品缩略卡 */
+  .proc-card { position: relative; width: 168px; height: 168px; border-radius: 22px; overflow: hidden; margin: 0 auto; box-shadow: var(--sh-card); }
+  .proc-card .thumb { position: absolute; inset: 0; }
+  .proc-card .scan { position: absolute; left: 0; right: 0; top: 0; height: 30px; background: linear-gradient(180deg, rgba(124,58,237,0), rgba(124,58,237,.45), rgba(124,58,237,0)); animation: proc-scan 1.8s ease-in-out infinite; }
+  .proc-card::after { content:''; position:absolute; inset:0; border:2px solid rgba(124,58,237,.35); border-radius:22px; pointer-events:none; }
+  @keyframes proc-scan { 0%,100% { transform: translateY(0) } 50% { transform: translateY(138px) } }
+  /* 不定进度条 */
+  .bar { width: 200px; height: 6px; border-radius: 3px; background: var(--line); margin: 0 auto 30px; overflow: hidden; position: relative; }
+  .bar::after { content:''; position:absolute; top:0; bottom:0; left:0; width:42%; border-radius:3px; background: var(--grad-brand); animation: bar-slide 1.4s ease-in-out infinite; }
+  @keyframes bar-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(340%); } }
 </style>
 </head>
 <body>
@@ -24,9 +34,15 @@
   <div class="phone">
     <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
 
-    <div style="padding:80px 28px 0;text-align:center">
-      <div class="spinner" style="margin:0 auto 28px"></div>
-      <div style="font-size:var(--fs-h1);font-weight:800;margin-bottom:40px">正在逐格比对</div>
+    <div style="padding:48px 28px 0;text-align:center">
+      <div class="proc-card">
+        <div class="thumb beads"></div>
+        <div class="scan"></div>
+      </div>
+      <div style="font-size:var(--fs-h1);font-weight:800;margin:22px 0 6px">正在逐格比对</div>
+      <div class="muted" style="font-size:13px;margin-bottom:22px">草莓熊 · 29 × 29</div>
+
+      <div class="bar"></div>
 
       <div style="text-align:left;display:inline-block;min-width:200px">
         <div class="step done"><span class="mk"></span>对齐拼板</div>
