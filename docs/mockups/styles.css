@@ -112,6 +112,9 @@ body {
 .badge-err { background: var(--err-color); }
 .badge-ok { background: var(--success); }
 
+/* 详情屏底栏（统一收尾，lift 阴影代替分割线） */
+.screen-footer { padding: 14px 20px 8px; box-shadow: var(--sh-lift); }
+
 /* ===== 软底面板（无边框分组） ===== */
 .soft-panel { background: var(--bg-soft); border-radius: var(--r-card); padding: 6px 16px; }
 .soft-panel .row { display: flex; align-items: center; gap: 12px; padding: 13px 0; }

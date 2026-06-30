@@ -6,14 +6,24 @@
 <title>结果（通过）· Pintcount 原型</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-8deg); border: 3px solid var(--success); color: var(--success); background: rgba(16,185,129,.14); font-size: 26px; font-weight: 900; padding: 12px 22px; border-radius: 14px; letter-spacing: 3px; line-height: 1.1; text-align: center; box-shadow: 0 6px 18px rgba(16,185,129,.20); }
-  .ok-badge { width: 46px; height: 46px; border-radius: 50%; background: var(--success); color: #fff; font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px rgba(16,185,129,.35); }
+  /* 100% 一致环：满绿渐变环 + 中心对勾 */
+  .ring { width: 118px; height: 118px; border-radius: 50%; background: conic-gradient(#10B981 0 70%, #34D399 70% 100%); display: grid; place-items: center; position: relative; margin: 0 auto; box-shadow: 0 10px 26px rgba(16,185,129,.25); }
+  .ring::before { content:''; position: absolute; inset: 9px; border-radius: 50%; background: var(--bg-app); }
+  .ring .ck { position: relative; font-size: 46px; font-weight: 900; color: var(--success); line-height: 1; }
+  .ring-cap { text-align: center; margin-top: 12px; font-size: var(--fs-label); font-weight: 800; letter-spacing: 2px; color: var(--success); }
+  .pass-title { text-align: center; font-size: var(--fs-display); font-weight: 900; letter-spacing: -.5px; margin-top: 8px; line-height: 1.1; }
+  .pass-sub { text-align: center; color: var(--muted); font-size: var(--fs-body); margin-top: 8px; }
+  .pass-sub b { color: var(--success); font-weight: 800; }
+  .dot-strip { display: flex; justify-content: center; gap: 5px; margin-top: 18px; }
+  .dot-strip i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+  .dot-strip i:nth-child(3n) { opacity: .55; }
+  .dot-strip i:nth-child(5n) { opacity: .8; }
 </style>
 </head>
 <body>
 <div class="stage">
   <a class="back" href="index.html">← 返回索引</a>
-  <div class="cap"><span>结果 · 通过</span> · 0 错（净图）· 核心流</div>
+  <div class="cap"><span>结果 · 通过</span> · 100% 一致 · 核心流</div>
 
   <div class="phone">
     <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
@@ -24,27 +34,21 @@
     </div>
 
     <div style="padding:12px 20px 0">
-      <!-- 净图 + 质检合格印章 -->
-      <div class="b2" style="height:268px;border-radius:var(--r-card);position:relative">
-        <div class="stamp">质检<br>合格</div>
-      </div>
-
-      <div style="display:flex;align-items:center;gap:14px;margin:18px 0 6px">
-        <div class="ok-badge">✓</div>
-        <div>
-          <div style="font-size:var(--fs-h1);font-weight:800;line-height:1.1">质检通过</div>
-          <div class="muted" style="font-size:13px;margin-top:2px">0 处错误，可以熨烫了</div>
-        </div>
-      </div>
-
-      <div class="soft-panel" style="margin-top:14px;margin-bottom:22px">
-        <div class="row" style="justify-content:center">
-          <span style="font-size:var(--fs-body);font-weight:700;color:var(--success)">每一格都和图纸一致</span>
-        </div>
-      </div>
+      <!-- 净图：无标记（hero 240，与 results/blueprint/gallery-detail 统一） -->
+      <div class="b2" style="height:240px;border-radius:var(--r-card);position:relative"></div>
     </div>
 
-    <div style="padding:14px 20px 8px;box-shadow:var(--sh-lift)">
+    <!-- 通过时刻 -->
+    <div style="padding:28px 24px 0">
+      <div class="ring"><span class="ck">✓</span></div>
+      <div class="ring-cap">100% 一致</div>
+      <div class="pass-title">质检通过</div>
+      <div class="pass-sub"><b>0 处错误</b>，可以熨烫了</div>
+      <div class="dot-strip"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div style="height:24px"></div>
+    <div class="screen-footer">
       <a class="btn btn-primary" href="share.html" style="text-decoration:none">分享</a>
     </div>
     <div class="home-bar"></div>
