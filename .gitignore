@@ -60,3 +60,9 @@ Thumbs.db
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Tools & build artifacts (session 2026-07)
+.claude/
+.specify/
+runs/
+tmp/

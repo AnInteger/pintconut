@@ -1,0 +1,206 @@
+"""matplotlib 纯手动点豆标注 — 可缩放 + 画圆 + 实时预览。
+
+不跑算法（脏图 ballooning 不可靠）。点中心→点豆缘→准圆，像 gt_annotate。
+WSLg 下 TkAgg 可靠 + 自带缩放工具栏（放大镜看清豆子，点击坐标不受缩放影响）。
+
+交互：
+  左键 点1: 点豆子中心（出现红十字）
+  左键 点2: 点豆缘 -> 半径 = 中心到该点距离 -> 锁定蓝圆
+            （鼠标移动时实时显示金黄虚线预览圆 + 半径数值）
+  右键    : 删除离光标最近的豆
+  n 下一张 / p 上一张 / u 撤销 / c 清空 / s 保存(导出YOLO) / q 退出
+  工具栏  : 🔍 放大镜(框选放大) / ✋ 平移 —— 看清豆子用，不影响点击坐标
+
+用法:
+  python src/bead_annotate_mpl.py <目录>     # 批量遍历
+  python src/bead_annotate_mpl.py <image>    # 单张
+  python src/bead_annotate_mpl.py            # 默认 training/photos/
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import cv2
+import numpy as np
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
+
+from src.bead_label_service import export_yolo
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMAGES_DIR = os.path.join(BASE, "training", "bead_dataset", "images", "train")
+LABELS_DIR = os.path.join(BASE, "training", "bead_dataset", "labels", "train")
+
+img = name = ax = fig = None
+boxes = []        # [{cx, cy, r, source, warn}]
+pending = None    # (cx, cy) of center awaiting edge click
+images = []
+idx = [0]
+_press = [None]   # (display_x, display_y, button) at press — tell click from drag
+mouse = [0, 0]
+
+
+def redraw():
+    for p in list(ax.patches):
+        p.remove()
+    for ln in list(ax.lines):
+        ln.remove()
+    for t in list(ax.texts):
+        t.remove()
+    for b in boxes:
+        c = "deepskyblue"
+        ax.add_patch(Circle((b["cx"], b["cy"]), b["r"], fill=False, color=c, lw=2))
+        ax.plot(b["cx"], b["cy"], "o", color=c, ms=3)
+        ax.text(b["cx"] + b["r"] + 2, b["cy"], str(b["r"]), color=c, fontsize=7)
+    if pending is not None:                       # 预览: 中心(红十字) -> 鼠标(金黄虚线圆)
+        cx, cy = pending
+        pr = int(((cx - mouse[0]) ** 2 + (cy - mouse[1]) ** 2) ** 0.5)
+        ax.add_patch(Circle((cx, cy), pr, fill=False, color="gold", lw=1, ls="--"))
+        ax.plot(cx, cy, "+", color="red", ms=14, mew=2)
+        ax.text(cx + 6, cy - 6, f"r={pr}", color="gold", fontsize=9)
+    cur = f"[{idx[0]+1}/{len(images)}] {os.path.basename(images[idx[0]])}  " if images else ""
+    ax.set_title(f"{cur}{len(boxes)} beads  |  LEFT=center->edge  RIGHT=delete  "
+                 f"n/p u/c/s/q", fontsize=9)
+    fig.canvas.draw_idle()
+
+
+def _load_existing(name, shape):
+    """加载该图已保存的 YOLO 标注,方便继续标/微调。"""
+    lp = os.path.join(LABELS_DIR, name + ".txt")
+    if not os.path.exists(lp):
+        return []
+    H, W = shape[:2]
+    out = []
+    for line in open(lp):
+        p = line.split()
+        if len(p) == 5:
+            _c, cx, cy, w, h = p
+            cx, cy, w = float(cx) * W, float(cy) * H, float(w) * W
+            out.append({"cx": int(round(cx)), "cy": int(round(cy)), "r": int(round(w / 2)),
+                        "source": "manual", "warn": False})
+    return out
+
+
+def load_current():
+    global img, name, boxes, pending
+    path = images[idx[0]]
+    name = os.path.splitext(os.path.basename(path))[0]
+    img = cv2.imread(path)
+    boxes = _load_existing(name, img.shape)
+    pending = None
+    ax.clear()
+    ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    redraw()
+
+
+def _do_label(button, x, y):
+    """纯手动: 左键1=点豆中心, 左键2=点豆缘(半径=距离), 右键=删最近。"""
+    global pending
+    if button == 1:
+        if pending is None:
+            pending = (x, y)                       # 中心
+        else:
+            cx, cy = pending
+            r = int(((cx - x) ** 2 + (cy - y) ** 2) ** 0.5)
+            if r >= 3:
+                boxes.append({"cx": cx, "cy": cy, "r": r, "source": "manual", "warn": False})
+            pending = None
+    elif button == 3 and boxes:
+        i = min(range(len(boxes)),
+                key=lambda k: (boxes[k]["cx"] - x) ** 2 + (boxes[k]["cy"] - y) ** 2)
+        boxes.pop(i)
+        pending = None
+    redraw()
+
+
+def on_press(event):
+    if event.inaxes is ax and event.xdata is not None:
+        _press[0] = (event.x, event.y, event.button)
+
+
+def on_release(event):
+    p = _press[0]
+    _press[0] = None
+    if p is None or event.inaxes is not ax or event.xdata is None:
+        return
+    dx, dy = event.x - p[0], event.y - p[1]
+    if dx * dx + dy * dy > 25:                     # 拖拽 = zoom/pan, 忽略
+        return
+    _do_label(p[2], int(event.xdata), int(event.ydata))
+
+
+def on_move(event):
+    if event.inaxes is ax and event.xdata is not None:
+        mouse[0], mouse[1] = event.xdata, event.ydata
+        if pending is not None:                    # 中心已点, 移动鼠标实时预览半径
+            redraw()
+
+
+def on_key(event):
+    global pending
+    if event.key == "n" and idx[0] < len(images) - 1:
+        idx[0] += 1
+        load_current()
+    elif event.key == "p" and idx[0] > 0:
+        idx[0] -= 1
+        load_current()
+    elif event.key == "u":
+        if pending is not None:
+            pending = None                         # 先取消待定点
+        elif boxes:
+            boxes.pop()
+        redraw()
+    elif event.key == "c":
+        boxes.clear()
+        pending = None
+        redraw()
+    elif event.key == "s" and boxes:
+        xyxy = [{"xyxy": [b["cx"] - b["r"], b["cy"] - b["r"], b["cx"] + b["r"], b["cy"] + b["r"]],
+                 "cx": b["cx"], "cy": b["cy"], "width": 2 * b["r"], "height": 2 * b["r"]}
+                for b in boxes]
+        ip, lp, n = export_yolo(img, xyxy, name, IMAGES_DIR, LABELS_DIR)
+        print(f"\n[saved] {n} beads:")
+        print(f"   image:  {ip}")
+        print(f"   labels: {lp}\n")
+        ax.set_title(f"[saved] {n} beads -> {os.path.basename(lp)}   (n=next)",
+                     fontsize=9, color="green")
+        fig.canvas.draw_idle()
+    elif event.key == "q":
+        plt.close(fig)
+
+
+def main():
+    global ax, fig, images
+    target = sys.argv[1] if len(sys.argv) > 1 else os.path.join(BASE, "training", "photos")
+    if os.path.isdir(target):
+        exts = (".jpg", ".jpeg", ".png", ".bmp")
+        cand = sorted(os.path.join(target, f) for f in os.listdir(target)
+                      if f.lower().endswith(exts))
+    elif os.path.isfile(target):
+        cand = [target]
+    else:
+        sys.exit(f"找不到: {target}")
+    images = [p for p in cand if cv2.imread(p) is not None]
+    skipped = len(cand) - len(images)
+    if skipped:
+        print(f"跳过 {skipped} 张读不了的(HEIC? 需先转 jpg)")
+    if not images:
+        sys.exit("没有可读的图")
+    fig, ax = plt.subplots()
+    load_current()
+    fig.canvas.mpl_connect("button_press_event", on_press)
+    fig.canvas.mpl_connect("button_release_event", on_release)
+    fig.canvas.mpl_connect("motion_notify_event", on_move)
+    fig.canvas.mpl_connect("key_press_event", on_key)
+    print("LEFT=center, LEFT=edge(=radius)  RIGHT=delete  u=undo c=clear s=save n=next p=prev q=quit")
+    try:
+        fig.canvas.manager.window.attributes('-topmost', True)   # 窗口置顶, 确保弹到最前
+    except Exception:
+        pass
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
