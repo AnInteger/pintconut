@@ -66,3 +66,7 @@ Thumbs.db
 .specify/
 runs/
 tmp/
+
+# YOLO auto-generated
+*.cache
+training/bead_train*.log
