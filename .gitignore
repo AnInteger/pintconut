@@ -70,3 +70,6 @@ tmp/
 # YOLO auto-generated
 *.cache
 training/bead_train*.log
+
+# 原始照片数据(标注来源,本地保留)
+data/photos/

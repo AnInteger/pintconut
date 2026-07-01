@@ -28,10 +28,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
 from src.bead_label_service import export_yolo
-
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IMAGES_DIR = os.path.join(BASE, "training", "bead_dataset", "images", "train")
-LABELS_DIR = os.path.join(BASE, "training", "bead_dataset", "labels", "train")
+from src.paths import PHOTOS_DIR, IMAGES_DIR, LABELS_DIR
 
 img = name = ax = fig = None
 boxes = []        # [{cx, cy, r, source, warn}]
@@ -173,7 +170,7 @@ def on_key(event):
 
 def main():
     global ax, fig, images
-    target = sys.argv[1] if len(sys.argv) > 1 else os.path.join(BASE, "training", "photos")
+    target = sys.argv[1] if len(sys.argv) > 1 else PHOTOS_DIR
     if os.path.isdir(target):
         exts = (".jpg", ".jpeg", ".png", ".bmp")
         cand = sorted(os.path.join(target, f) for f in os.listdir(target)
