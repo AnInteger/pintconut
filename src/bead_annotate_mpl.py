@@ -74,7 +74,7 @@ def redraw():
         ax.plot(b["cx"], b["cy"], "o", color=c, ms=3)
         ax.text(b["cx"] + b["r"] + 2, b["cy"], str(b["r"]), color=c, fontsize=7)
     _draw_preview()
-    cur = f"[{idx[0]+1}/{len(images)}] {os.path.basename(images[idx[0]])}  " if images else ""
+    cur = f"[{idx[0]+1}/{len(images)}] {os.path.basename(images[idx[0]][0])}  " if images else ""
     ax.set_title(f"{cur}{len(boxes)} beads  |  LEFT=center->edge  RIGHT=delete  "
                  f"n/p u/c/s/q", fontsize=9)
     fig.canvas.draw_idle()
