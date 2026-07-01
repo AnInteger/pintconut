@@ -18,7 +18,7 @@ import cv2
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, TextBox
 from matplotlib.patches import Rectangle
 from ultralytics import YOLO
 
@@ -55,10 +55,15 @@ def main():
 
     fig, ax = plt.subplots(figsize=(11, 9))
     plt.subplots_adjust(bottom=0.15)
-    ax_conf = fig.add_axes([0.2, 0.09, 0.6, 0.025])
-    ax_iou = fig.add_axes([0.2, 0.04, 0.6, 0.025])
-    s_conf = Slider(ax_conf, "conf", 0.01, 0.5, valinit=0.08)
-    s_iou = Slider(ax_iou, "iou", 0.3, 0.85, valinit=0.6)
+    ax_conf = fig.add_axes([0.18, 0.09, 0.58, 0.025])
+    ax_iou = fig.add_axes([0.18, 0.04, 0.58, 0.025])
+    s_conf = Slider(ax_conf, "conf", 0.01, 0.5, valinit=0.08, valstep=0.01)
+    s_iou = Slider(ax_iou, "iou", 0.3, 0.85, valinit=0.6, valstep=0.01)
+    # 数值输入框(回车设滑块)
+    tb_c = TextBox(fig.add_axes([0.8, 0.09, 0.06, 0.025]), "", initial="0.08")
+    tb_i = TextBox(fig.add_axes([0.8, 0.04, 0.06, 0.025]), "", initial="0.6")
+    tb_c.on_submit(lambda t: s_conf.set_val(min(0.5, max(0.01, float(t)))))
+    tb_i.on_submit(lambda t: s_iou.set_val(min(0.85, max(0.3, float(t)))))
 
     def redraw():
         for a in boxes_artists:
