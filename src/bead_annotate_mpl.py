@@ -27,6 +27,11 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
+# 禁用 matplotlib 默认工具栏快捷键(s=save图/p=pan/o=zoom/q=quit...), 和标注键冲突
+for _k in ("save", "pan", "zoom", "quit", "back", "forward", "grid", "grid_minor",
+           "fullscreen", "home", "yscale", "xscale", "copy"):
+    plt.rcParams[f"keymap.{_k}"] = []
+
 from src.bead_label_service import export_yolo
 from src.paths import DATASET_DIR
 
