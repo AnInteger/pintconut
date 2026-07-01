@@ -40,6 +40,26 @@ _press = [None]   # (display_x, display_y, button) at press — tell click from 
 mouse = [0, 0]
 
 
+preview_artists = []   # 预览(中心十字+金黄虚线圆+r)单独管理, on_move 只更新它不全重画
+
+
+def _draw_preview():
+    """只重画预览, 不动已标 boxes —— on_move 调这个省卡。"""
+    for a in preview_artists:
+        try:
+            a.remove()
+        except Exception:
+            pass
+    preview_artists.clear()
+    if pending is None:
+        return
+    cx, cy = pending
+    pr = int(((cx - mouse[0]) ** 2 + (cy - mouse[1]) ** 2) ** 0.5)
+    preview_artists.append(ax.add_patch(Circle((cx, cy), pr, fill=False, color="gold", lw=1, ls="--")))
+    preview_artists.extend(ax.plot([cx], [cy], "+", color="red", ms=14, mew=2))
+    preview_artists.append(ax.text(cx + 6, cy - 6, f"r={pr}", color="gold", fontsize=9))
+
+
 def redraw():
     for p in list(ax.patches):
         p.remove()
@@ -47,17 +67,13 @@ def redraw():
         ln.remove()
     for t in list(ax.texts):
         t.remove()
+    preview_artists.clear()                        # patches 已清, 预览跟踪也清(下面 _draw_preview 重画)
     for b in boxes:
         c = "deepskyblue"
         ax.add_patch(Circle((b["cx"], b["cy"]), b["r"], fill=False, color=c, lw=2))
         ax.plot(b["cx"], b["cy"], "o", color=c, ms=3)
         ax.text(b["cx"] + b["r"] + 2, b["cy"], str(b["r"]), color=c, fontsize=7)
-    if pending is not None:                       # 预览: 中心(红十字) -> 鼠标(金黄虚线圆)
-        cx, cy = pending
-        pr = int(((cx - mouse[0]) ** 2 + (cy - mouse[1]) ** 2) ** 0.5)
-        ax.add_patch(Circle((cx, cy), pr, fill=False, color="gold", lw=1, ls="--"))
-        ax.plot(cx, cy, "+", color="red", ms=14, mew=2)
-        ax.text(cx + 6, cy - 6, f"r={pr}", color="gold", fontsize=9)
+    _draw_preview()
     cur = f"[{idx[0]+1}/{len(images)}] {os.path.basename(images[idx[0]])}  " if images else ""
     ax.set_title(f"{cur}{len(boxes)} beads  |  LEFT=center->edge  RIGHT=delete  "
                  f"n/p u/c/s/q", fontsize=9)
@@ -132,8 +148,9 @@ def on_release(event):
 def on_move(event):
     if event.inaxes is ax and event.xdata is not None:
         mouse[0], mouse[1] = event.xdata, event.ydata
-        if pending is not None:                    # 中心已点, 移动鼠标实时预览半径
-            redraw()
+        if pending is not None:                    # 只更新预览, 不重画 boxes(省卡)
+            _draw_preview()
+            fig.canvas.draw_idle()
 
 
 def on_key(event):
