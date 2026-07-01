@@ -31,7 +31,7 @@ def validate_single(model, image_path, output_dir, conf_threshold):
         print(f"  [ERROR] 无法读取: {image_path}")
         return 0
 
-    results = model(image, conf=conf_threshold)
+    results = model(image, conf=conf_threshold, iou=0.6)
     filename = os.path.basename(image_path)
 
     if results[0].boxes is None or len(results[0].boxes) == 0:
@@ -102,7 +102,7 @@ def main():
         help="输出目录 (默认: training/validation_results)",
     )
     parser.add_argument(
-        "--conf", type=float, default=0.5,
+        "--conf", type=float, default=0.08,
         help="置信度阈值 (默认: 0.5)",
     )
     args = parser.parse_args()

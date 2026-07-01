@@ -1,0 +1,8 @@
+# Bead 检测数据集
+path: /home/sunxing/code/pintconut/training/bead_dataset
+train: /home/sunxing/code/pintconut/training/bead_dataset/images/train
+val: /home/sunxing/code/pintconut/training/bead_dataset/images/valid
+
+nc: 1
+names:
+  0: bead
