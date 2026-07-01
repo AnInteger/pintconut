@@ -28,13 +28,14 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
 from src.bead_label_service import export_yolo
-from src.paths import PHOTOS_DIR, IMAGES_DIR, LABELS_DIR
+from src.paths import DATASET_DIR
 
 img = name = ax = fig = None
 boxes = []        # [{cx, cy, r, source, warn}]
 pending = None    # (cx, cy) of center awaiting edge click
-images = []
+images = []       # list of (path, split) — 要标的图(train/valid)
 idx = [0]
+cur_split = "train"
 _press = [None]   # (display_x, display_y, button) at press — tell click from drag
 mouse = [0, 0]
 
@@ -63,9 +64,9 @@ def redraw():
     fig.canvas.draw_idle()
 
 
-def _load_existing(name, shape):
+def _load_existing(name, shape, split):
     """加载该图已保存的 YOLO 标注,方便继续标/微调。"""
-    lp = os.path.join(LABELS_DIR, name + ".txt")
+    lp = os.path.join(DATASET_DIR, "labels", split, name + ".txt")
     if not os.path.exists(lp):
         return []
     H, W = shape[:2]
@@ -81,11 +82,11 @@ def _load_existing(name, shape):
 
 
 def load_current():
-    global img, name, boxes, pending
-    path = images[idx[0]]
+    global img, name, boxes, pending, cur_split
+    path, cur_split = images[idx[0]]
     name = os.path.splitext(os.path.basename(path))[0]
     img = cv2.imread(path)
-    boxes = _load_existing(name, img.shape)
+    boxes = _load_existing(name, img.shape, cur_split)
     pending = None
     ax.clear()
     ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -157,7 +158,9 @@ def on_key(event):
         xyxy = [{"xyxy": [b["cx"] - b["r"], b["cy"] - b["r"], b["cx"] + b["r"], b["cy"] + b["r"]],
                  "cx": b["cx"], "cy": b["cy"], "width": 2 * b["r"], "height": 2 * b["r"]}
                 for b in boxes]
-        ip, lp, n = export_yolo(img, xyxy, name, IMAGES_DIR, LABELS_DIR)
+        img_dir = os.path.join(DATASET_DIR, "images", cur_split)
+        lbl_dir = os.path.join(DATASET_DIR, "labels", cur_split)
+        ip, lp, n = export_yolo(img, xyxy, name, img_dir, lbl_dir)
         print(f"\n[saved] {n} beads:")
         print(f"   image:  {ip}")
         print(f"   labels: {lp}\n")
@@ -170,21 +173,22 @@ def on_key(event):
 
 def main():
     global ax, fig, images
-    target = sys.argv[1] if len(sys.argv) > 1 else PHOTOS_DIR
-    if os.path.isdir(target):
-        exts = (".jpg", ".jpeg", ".png", ".bmp")
-        cand = sorted(os.path.join(target, f) for f in os.listdir(target)
-                      if f.lower().endswith(exts))
-    elif os.path.isfile(target):
-        cand = [target]
+    # 默认扫 bead_dataset/images/{train,valid}(要标的图);或传单张图
+    images = []
+    if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
+        images = [(sys.argv[1], "train")]
     else:
-        sys.exit(f"找不到: {target}")
-    images = [p for p in cand if cv2.imread(p) is not None]
-    skipped = len(cand) - len(images)
-    if skipped:
-        print(f"跳过 {skipped} 张读不了的(HEIC? 需先转 jpg)")
+        base_imgs = os.path.join(DATASET_DIR, "images")
+        for split in ["train", "valid"]:
+            d = os.path.join(base_imgs, split)
+            if not os.path.isdir(d):
+                continue
+            for f in sorted(os.listdir(d)):
+                if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
+                    images.append((os.path.join(d, f), split))
+    images = [(p, s) for p, s in images if cv2.imread(p) is not None]
     if not images:
-        sys.exit("没有可读的图")
+        sys.exit(f"没找到要标的图(在 {DATASET_DIR}/images/{{train,valid}})")
     fig, ax = plt.subplots()
     load_current()
     fig.canvas.mpl_connect("button_press_event", on_press)
