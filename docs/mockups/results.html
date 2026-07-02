@@ -6,7 +6,8 @@
 <title>结果（有错）· Pintcount 原型</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .idx-num { width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .idx-num { width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Space Grotesk','Inter',sans-serif; }
+  .mark .num { font-family: 'Space Grotesk','Inter',sans-serif; }
   .n-color { background: var(--err-color); }
   .n-missing { background: var(--err-missing); }
   .n-extra { background: var(--err-extra); }
@@ -15,7 +16,7 @@
 <body>
 <div class="stage">
   <a class="back" href="index.html">← 返回索引</a>
-  <div class="cap"><span>结果 · 有错</span> · 多色标记（红=颜色错 / 蓝=空缺 / 橙=多余）· 核心流</div>
+  <div class="cap"><span>结果 · 有错</span> · 多色标记（rose=颜色错 / sapphire=空缺 / amber=多余）· 核心流</div>
 
   <div class="phone">
     <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
@@ -35,8 +36,8 @@
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
-        <span class="pill">4 处错误</span>
-        <span class="muted" style="font-size:13px;font-weight:600">2 颜色错 · 1 空缺 · 1 多余</span>
+        <span class="pill"><span class="lat">4</span> 处错误</span>
+        <span class="muted" style="font-size:13px;font-weight:600"><span class="lat">2</span> 颜色错 · <span class="lat">1</span> 空缺 · <span class="lat">1</span> 多余</span>
       </div>
 
       <!-- 错误索引（软底面板，图与清单为索引关系） -->
