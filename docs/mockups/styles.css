@@ -171,3 +171,15 @@ body {
 .bead.md { width: 18px; height: 18px; }
 .peg { background-image: radial-gradient(circle, rgba(26,19,32,.05) 1px, transparent 1.7px); background-size: 13px 13px; }
 .glow-tr { position: absolute; top: -72px; right: -52px; width: 244px; height: 244px; border-radius: 50%; background: radial-gradient(circle, rgba(240,78,110,.32), rgba(108,77,240,.14) 55%, transparent 72%); pointer-events: none; z-index: 0; }
+
+/* v3 悬浮玻璃岛导航 */
+.tab-island { margin: 16px 52px 10px; padding: 6px; border-radius: 24px; background: rgba(255,255,255,.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 14px 32px rgba(24,20,31,.13); border: 1px solid rgba(255,255,255,.7); display: flex; gap: 4px; margin-top: auto; }
+.tab-island .ti { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 0; border-radius: 18px; color: var(--muted); text-decoration: none; }
+.tab-island .ti .ic { height: 18px; display: flex; align-items: center; justify-content: center; }
+.tab-island .ti .lb { font-size: 11px; font-weight: 700; }
+.tab-island .ti .dot { width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+.tab-island .ti .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.tab-island .ti .grid i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tab-island .ti .ring { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid currentColor; }
+.tab-island .ti.on { color: var(--ink); }
+.tab-island .ti.on .lb { font-weight: 800; }
