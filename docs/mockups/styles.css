@@ -1,6 +1,6 @@
-/* Pintcount 原型 — 共享设计令牌 + 公共组件
-   参考 docs/superpowers/specs/2026-06-22-pintcount-prototype-design.md §3
-   多色错误标记（新）：颜色错=红 / 空缺=蓝 / 多余=橙 */
+/* Pintcount 原型 — 共享设计令牌 + 公共组件（v3 设计系统，见 STYLE.md）
+   多色错误标记：颜色错=rose / 空缺=sapphire / 多余=amber */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ===== 设计令牌 ===== */
 :root {
@@ -40,18 +40,18 @@
 
   /* 阴影 */
   --sh-card: 0 16px 34px rgba(26, 16, 51, .14);
-  --sh-cta: 0 12px 24px rgba(124, 58, 237, .28);
+  --sh-cta: 0 12px 24px rgba(108, 77, 240, .26);
   --sh-lift: 0 -10px 24px rgba(26, 16, 51, .05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
   background: linear-gradient(180deg, #FFFBF7, #F4EEFA);
   color: var(--ink);
   min-height: 100vh;
-  -webkit-font-smoothing: antialied;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ===== 页面外壳（多屏并排预览用） ===== */
@@ -138,11 +138,11 @@ body {
    三类错误各一色 + 编号圆 + 字形（实心点 / 空方框 / +）。图=位置，清单=详情，索引关系。 */
 .mark { position: absolute; border-radius: 7px; box-shadow: 0 0 0 3px rgba(0, 0, 0, .08); }
 .mark .num { position: absolute; right: -8px; top: -8px; width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-app); }
-.mark-color { border: 3px solid var(--err-color); box-shadow: 0 0 0 3px rgba(239, 68, 68, .22); }
+.mark-color { border: 3px solid var(--err-color); box-shadow: 0 0 0 3px rgba(240, 78, 110, .22); }
 .mark-color .num { background: var(--err-color); }
-.mark-missing { border: 3px dashed var(--err-missing); box-shadow: 0 0 0 3px rgba(56, 189, 248, .22); }
+.mark-missing { border: 3px dashed var(--err-missing); box-shadow: 0 0 0 3px rgba(58, 123, 213, .22); }
 .mark-missing .num { background: var(--err-missing); }
-.mark-extra { border: 3px solid var(--err-extra); box-shadow: 0 0 0 3px rgba(245, 158, 11, .22); }
+.mark-extra { border: 3px solid var(--err-extra); box-shadow: 0 0 0 3px rgba(232, 143, 30, .22); }
 .mark-extra .num { background: var(--err-extra); }
 
 /* 清单分类字形（不靠颜色单一区分，色弱可读） */
@@ -161,3 +161,13 @@ body {
 .brand-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--grad-brand); }
 .lockup { display: flex; align-items: center; gap: 9px; }
 .lockup b { font-size: var(--fs-title); font-weight: 800; }
+
+/* ===== v3 工具：拉丁字 / 豆原子 / 拼板纹理 / 光晕 ===== */
+.lat { font-family: 'Space Grotesk', 'Inter', -apple-system, sans-serif; }
+.bead { position: relative; border-radius: 50%; box-shadow: inset -2px -2px 3px rgba(0,0,0,.16), inset 2px 2px 3px rgba(255,255,255,.55); flex-shrink: 0; }
+.bead::after { content: ''; position: absolute; left: 50%; top: 50%; width: 32%; height: 32%; border-radius: 50%; background: rgba(0,0,0,.18); transform: translate(-50%, -50%); }
+.bead.xs { width: 9px; height: 9px; }
+.bead.sm { width: 11px; height: 11px; }
+.bead.md { width: 18px; height: 18px; }
+.peg { background-image: radial-gradient(circle, rgba(26,19,32,.05) 1px, transparent 1.7px); background-size: 13px 13px; }
+.glow-tr { position: absolute; top: -72px; right: -52px; width: 244px; height: 244px; border-radius: 50%; background: radial-gradient(circle, rgba(240,78,110,.32), rgba(108,77,240,.14) 55%, transparent 72%); pointer-events: none; z-index: 0; }
