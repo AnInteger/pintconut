@@ -18,6 +18,7 @@ WSLg 下 TkAgg 可靠 + 自带缩放工具栏（放大镜看清豆子，点击�
 """
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import cv2
@@ -43,6 +44,7 @@ idx = [0]
 cur_split = "train"
 _press = [None]   # (display_x, display_y, button) at press — tell click from drag
 mouse = [0, 0]
+_last_draw = [0.0]   # on_move 限频用(避免 draw_idle 阻塞按键)
 
 
 preview_artists = []   # 预览(中心十字+金黄虚线圆+r)单独管理, on_move 只更新它不全重画
@@ -153,9 +155,12 @@ def on_release(event):
 def on_move(event):
     if event.inaxes is ax and event.xdata is not None:
         mouse[0], mouse[1] = event.xdata, event.ydata
-        if pending is not None:                    # 只更新预览, 不重画 boxes(省卡)
-            _draw_preview()
-            fig.canvas.draw_idle()
+        if pending is not None:                    # 预览限频(50ms), 避免 draw_idle 阻塞按键
+            now = time.time()
+            if now - _last_draw[0] > 0.05:
+                _draw_preview()
+                fig.canvas.draw_idle()
+                _last_draw[0] = now
 
 
 def on_key(event):
