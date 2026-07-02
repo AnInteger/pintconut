@@ -5,13 +5,13 @@
 /* ===== 设计令牌 ===== */
 :root {
   /* 品牌 */
-  --grad-brand: linear-gradient(135deg, #7C3AED, #EC4899);
-  --brand-a: #7C3AED;
-  --brand-b: #EC4899;
+  --grad-brand: linear-gradient(135deg, #F04E6E, #6C4DF0);
+  --brand-a: #6C4DF0;
+  --brand-b: #F04E6E;
 
   /* 文字 / 底色 */
-  --ink: #1A1033;
-  --muted: #6B5B8A;
+  --ink: #1A1320;
+  --muted: #7A7286;
   --inactive: #B4A8C9;
   --bg-app: #FFFBF7;
   --bg-surface: #FFFFFF;
@@ -20,10 +20,10 @@
   --chip: #F4EEFA;
 
   /* 语义色（错误三色映射） */
-  --err-color: #EF4444;   /* 颜色错 */
-  --err-missing: #38BDF8; /* 空缺 */
-  --err-extra: #F59E0B;   /* 多余 */
-  --success: #10B981;
+  --err-color: #F04E6E;   /* 颜色错 = rose */
+  --err-missing: #3A7BD5; /* 空缺 = sapphire */
+  --err-extra: #E88F1E;   /* 多余 = amber */
+  --success: #0EB5A6;     /* 通过 = teal */
 
   /* 字号阶 */
   --fs-display: 34px;

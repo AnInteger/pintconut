@@ -121,6 +121,6 @@
 |---|---|
 | `docs/mockups/STYLE.md` | 本文件，设计系统 |
 | `docs/mockups/styles.css` | 共享令牌 + 原子 + 组件（代码侧约束） |
-| `docs/mockups/home-luma.html` | v3 参考实现（首页） |
+| `docs/mockups/home.html` | v3 参考实现（首页，已迁移） |
 | `docs/mockups/*.html` | 各屏（按本系统迁移） |
 | `docs/superpowers/specs/2026-06-18-pintcount-app-prd.md` | 产品需求（v1.4） |

@@ -5,15 +5,73 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>首页 · Pintcount 原型</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  .hero { position: relative; padding: 6px 20px 4px; overflow: hidden; }
-  .hero-glow { position: absolute; top: -70px; right: -50px; width: 230px; height: 230px; border-radius: 50%; background: radial-gradient(circle, rgba(236,72,153,.30), rgba(124,58,237,.12) 55%, transparent 72%); pointer-events: none; }
-  .hero .lockup { position: relative; margin: 6px 0 26px; }
-  .hero-title { position: relative; font-size: var(--fs-display); font-weight: 900; line-height: 1.1; letter-spacing: -.6px; }
-  .hero-sub { position: relative; font-size: var(--fs-body); font-weight: 600; color: var(--muted); margin: 12px 0 18px; line-height: 1.5; }
-  .bead-row { position: relative; display: flex; gap: 8px; margin-bottom: 22px; }
-  .bead-row span { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 -2px 0 rgba(0,0,0,.10); }
-  .hero .btn { position: relative; }
+  :root {
+    --grad: linear-gradient(135deg, #F04E6E 0%, #6C4DF0 100%);
+    --ink:#1A1320; --muted:#7A7286; --line:#EFE9F5; --bg:#FFFBF7;
+    --pink:#F04E6E; --purple:#6C4DF0; --orange:#E88F1E; --green:#0EB5A6; --blue:#3A7BD5;
+    --lat:'Space Grotesk','Inter',-apple-system,sans-serif;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'PingFang SC',system-ui,sans-serif;
+  }
+  .phone.v3 { background: var(--bg); position: relative; font-family: var(--sans); }
+  .v3 * { font-family: inherit; }
+  .lat { font-family: var(--lat); }
+
+  .peg { background-image: radial-gradient(circle, rgba(26,19,32,.05) 1px, transparent 1.7px); background-size: 13px 13px; }
+  .glow { position:absolute; top:-72px; right:-52px; width:244px; height:244px; border-radius:50%; background: radial-gradient(circle, rgba(240,78,110,.32), rgba(108,77,240,.14) 55%, transparent 72%); pointer-events:none; z-index:0; }
+
+  /* 一颗豆：高光+孔 */
+  .bead { position:relative; border-radius:50%; box-shadow: inset -2px -2px 3px rgba(0,0,0,.16), inset 2px 2px 3px rgba(255,255,255,.55); flex-shrink:0; }
+  .bead::after { content:''; position:absolute; left:50%; top:50%; width:32%; height:32%; border-radius:50%; background: rgba(0,0,0,.18); transform: translate(-50%,-50%); }
+  .bead.sm{width:11px;height:11px;} .bead.md{width:18px;height:18px;} .bead.xs{width:9px;height:9px;}
+
+  .v3-head { display:flex; align-items:center; gap:10px; padding:10px 22px 0; margin:8px 0 34px; position:relative; z-index:1;}
+  .logo-beads { display:grid; grid-template-columns:1fr 1fr; gap:3px; width:30px; height:30px; place-items:center; }
+  .v3-head b { font-family: var(--lat); font-size:18px; font-weight:700; color:var(--ink); letter-spacing:-.4px; }
+
+  .v3-hero { padding:0 22px; position:relative; z-index:1; }
+  .v3-title { font-size:44px; font-weight:800; letter-spacing:-1.6px; line-height:1.02; color:var(--ink); }
+  .v3-sub { font-size:15.5px; color:var(--muted); margin:14px 0 22px; line-height:1.55; font-weight:500; }
+  .palette { display:flex; gap:10px; margin-bottom:28px; align-items:center; }
+  .palette .lab { font-family: var(--lat); font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.6px; margin-left:5px; }
+
+  /* CTA：可按压的“大珠子” */
+  .cta-bead { position:relative; display:flex; align-items:center; justify-content:center; gap:12px; height:58px; border-radius:20px; color:#fff; font-size:17px; font-weight:700; text-decoration:none; background: var(--purple); animation: cta-cycle 12s ease-in-out infinite; box-shadow: 0 16px 30px rgba(26,19,32,.25); }
+  @keyframes cta-cycle { 0%,18%{background:#6C4DF0} 25%,43%{background:#F04E6E} 50%,68%{background:#E88F1E} 75%,93%{background:#0EB5A6} 100%{background:#6C4DF0} }
+  @media (prefers-reduced-motion: reduce){ .cta-bead{ animation:none; background: var(--purple); } }
+  .cta-bead .arrow { width:30px; height:30px; border-radius:50%; background: rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow: inset 0 1px 2px rgba(255,255,255,.45), inset 0 -1px 2px rgba(0,0,0,.12); }
+
+  /* 章节头 */
+  .v3-sec { display:flex; align-items:baseline; justify-content:space-between; padding:0 22px; margin:34px 0 14px; }
+  .v3-sec .ey { font-family: var(--lat); font-size:10.5px; font-weight:600; color:var(--muted); letter-spacing:1px; margin-right:8px; }
+  .v3-sec h { font-size:13px; font-weight:700; color:var(--ink); }
+  .v3-sec a { font-size:13px; font-weight:700; color:var(--purple); text-decoration:none; }
+
+  /* 装裱卡 */
+  .art-card { background:#fff; border-radius:20px; overflow:hidden; box-shadow: 0 12px 26px rgba(24,20,31,.10); border:1px solid rgba(26,19,32,.04); flex-shrink:0; text-decoration:none; }
+  .art-card .thumb { position:relative; }
+  .art-card .foot { padding:12px 14px 14px; }
+  .art-card .row1 { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .art-card .name { font-size:14.5px; font-weight:700; color:var(--ink); }
+  .art-card .st { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:var(--pink); }
+  .art-card .st .n { font-family: var(--lat); font-size:13px; }
+  .art-card .st.ok { color:var(--green); }
+  .art-card .meta { font-family: var(--lat); font-size:11.5px; color:var(--muted); margin-top:5px; letter-spacing:.2px; }
+  .art-card.std { width:178px; } .art-card.std .thumb { height:150px; }
+  .art-card.feat { width:228px; } .art-card.feat .thumb { height:192px; }
+  .art-card.feat .name { font-size:16px; }
+
+  /* 悬浮玻璃岛 tabbar */
+  .tab-island { margin: 16px 52px 10px; padding:6px; border-radius:24px; background: rgba(255,255,255,.82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 14px 32px rgba(24,20,31,.13); border:1px solid rgba(255,255,255,.7); display:flex; gap:4px; margin-top:auto; }
+  .ti { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:9px 0; border-radius:18px; color:var(--muted); text-decoration:none; }
+  .ti .ic { height:18px; display:flex; align-items:center; justify-content:center; }
+  .ti .lb { font-size:11px; font-weight:700; }
+  .ti .dot { width:12px; height:12px; border-radius:50%; background: currentColor; }
+  .ti .grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; } .ti .grid i { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .ti .ring { width:14px; height:14px; border-radius:50%; border:2.5px solid currentColor; }
+  .ti.on { background: transparent; color:var(--ink); box-shadow:none; }
 </style>
 </head>
 <body>
@@ -21,63 +79,68 @@
   <a class="back" href="index.html">← 返回索引</a>
   <div class="cap"><span>首页</span> · 核心流</div>
 
-  <div class="phone">
+  <div class="phone v3">
+    <div class="glow"></div>
     <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
 
-    <div class="hero">
-      <div class="hero-glow"></div>
-      <div class="lockup">
-        <div class="brand-mark"></div><b>Pintcount</b>
+    <div class="peg" style="padding-bottom:6px">
+      <div class="v3-head">
+        <div class="logo-beads">
+          <i class="bead sm" style="background:var(--pink)"></i><i class="bead sm" style="background:var(--purple)"></i>
+          <i class="bead sm" style="background:var(--orange)"></i><i class="bead sm" style="background:var(--green)"></i>
+        </div>
+        <b>Pintcount</b>
       </div>
 
-      <div class="hero-title">拼豆质检</div>
-      <div class="hero-sub">熨烫之前，拍一张对照图纸，标出错豆。</div>
+      <div class="v3-hero">
+        <div class="v3-title">拼豆，<br>烫前先质检。</div>
+        <div class="v3-sub">拍一张成品照，对照图纸，标出错豆——烫完就不返工。</div>
 
-      <div class="bead-row">
-        <span style="background:#EC4899"></span><span style="background:#7C3AED"></span><span style="background:#F59E0B"></span><span style="background:#10B981"></span><span style="background:#38BDF8"></span>
+        <div class="palette">
+          <i class="bead md" style="background:var(--pink)"></i><i class="bead md" style="background:var(--purple)"></i><i class="bead md" style="background:var(--orange)"></i><i class="bead md" style="background:var(--green)"></i>
+          <span class="lab lat">YOUR BEADS</span>
+        </div>
+
+        <a class="cta-bead" href="blueprint.html"><span>开始质检</span><span class="arrow">→</span></a>
       </div>
-
-      <a class="btn btn-primary" href="blueprint.html">Count<span class="chev-r"></span></a>
     </div>
 
-    <div style="padding:0 20px">
-      <div class="row-between" style="margin:30px 0 14px">
-        <span class="section-label">最近作品</span>
-        <a href="gallery.html" style="font-size:var(--fs-label);font-weight:800;color:var(--brand-a);text-decoration:none">全部</a>
-      </div>
+    <div class="v3-sec">
+      <div><span class="ey lat">RECENT</span><h>最近作品</h></div>
+      <a href="gallery.html">全部</a>
     </div>
 
     <div style="overflow:hidden">
-      <div style="display:flex;gap:12px;padding:0 20px 6px;width:max-content">
-        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
-          <div class="b1" style="height:150px;border-radius:18px;position:relative">
-            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-err">4 错</div>
+      <div style="display:flex;gap:14px;padding:0 22px 6px;width:max-content;align-items:flex-start">
+        <a href="gallery-detail.html" class="art-card feat">
+          <div class="thumb b1"></div>
+          <div class="foot">
+            <div class="row1"><span class="name">草莓熊</span><span class="st"><i class="bead xs" style="background:var(--pink)"></i><span class="n lat">4</span>错</span></div>
+            <div class="meta">29×29 · YESTERDAY</div>
           </div>
-          <div style="font-size:12px;font-weight:700;margin-top:8px">草莓熊 · 29×29</div>
-          <div style="font-size:11px;color:var(--muted)">昨天</div>
         </a>
-        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
-          <div class="b2" style="height:150px;border-radius:18px;position:relative">
-            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-ok">通过</div>
+        <a href="gallery-detail.html" class="art-card std">
+          <div class="thumb b2"></div>
+          <div class="foot">
+            <div class="row1"><span class="name">向日葵</span><span class="st ok"><i class="bead xs" style="background:var(--green)"></i>通过</span></div>
+            <div class="meta">20×20 · 3D AGO</div>
           </div>
-          <div style="font-size:12px;font-weight:700;margin-top:8px">向日葵 · 20×20</div>
-          <div style="font-size:11px;color:var(--muted)">3 天前</div>
         </a>
-        <a href="gallery-detail.html" style="width:150px;flex-shrink:0;text-decoration:none;color:inherit">
-          <div class="b3" style="height:150px;border-radius:18px;position:relative">
-            <div style="position:absolute;left:10px;bottom:10px" class="badge badge-err">1 错</div>
+        <a href="gallery-detail.html" class="art-card std">
+          <div class="thumb b3"></div>
+          <div class="foot">
+            <div class="row1"><span class="name">海浪</span><span class="st"><i class="bead xs" style="background:var(--pink)"></i><span class="n lat">1</span>错</span></div>
+            <div class="meta">29×29 · LAST WEEK</div>
           </div>
-          <div style="font-size:12px;font-weight:700;margin-top:8px">海浪 · 29×29</div>
-          <div style="font-size:11px;color:var(--muted)">上周</div>
         </a>
-        <div style="width:40px;flex-shrink:0"></div>
+        <div style="width:24px;flex-shrink:0"></div>
       </div>
     </div>
 
-    <div class="tabbar">
-      <div class="tab on"><div class="ic ic-home"></div><div class="lb">首页</div></div>
-      <a class="tab" href="gallery.html" style="text-decoration:none"><div class="ic ic-gallery"><span></span><span></span><span></span><span></span></div><div class="lb">作品库</div></a>
-      <a class="tab" href="settings.html" style="text-decoration:none"><div class="ic ic-settings"></div><div class="lb">设置</div></a>
+    <div class="tab-island">
+      <a class="ti on"><span class="ic"><span class="dot"></span></span><span class="lb">首页</span></a>
+      <a class="ti" href="gallery.html"><span class="ic"><span class="grid"><i></i><i></i><i></i><i></i></span></span><span class="lb">作品库</span></a>
+      <a class="ti" href="settings.html"><span class="ic"><span class="ring"></span></span><span class="lb">设置</span></a>
     </div>
     <div class="home-bar"></div>
   </div>
