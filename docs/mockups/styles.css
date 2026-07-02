@@ -124,15 +124,15 @@ body {
 .beads {
   background-color: #FFF1F5;
   background-image:
-    radial-gradient(circle at 50% 50%, #EC4899 0 22%, transparent 23%),
-    radial-gradient(circle at 50% 50%, #7C3AED 0 22%, transparent 23%),
-    radial-gradient(circle at 50% 50%, #F59E0B 0 22%, transparent 23%),
-    radial-gradient(circle at 50% 50%, #10B981 0 22%, transparent 23%);
+    radial-gradient(circle at 50% 50%, #F04E6E 0 22%, transparent 23%),
+    radial-gradient(circle at 50% 50%, #6C4DF0 0 22%, transparent 23%),
+    radial-gradient(circle at 50% 50%, #E88F1E 0 22%, transparent 23%),
+    radial-gradient(circle at 50% 50%, #0EB5A6 0 22%, transparent 23%);
   background-size: 12px 12px; background-position: 0 0, 6px 0, 0 6px, 6px 6px;
 }
-.b1 { background-color: #FFF1F5; background-image: radial-gradient(circle at 50% 50%, #EC4899 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #F472B6 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
-.b2 { background-color: #FFF7E6; background-image: radial-gradient(circle at 50% 50%, #F59E0B 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #10B981 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
-.b3 { background-color: #EFF6FF; background-image: radial-gradient(circle at 50% 50%, #38BDF8 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #7C3AED 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
+.b1 { background-color: #FFF1F5; background-image: radial-gradient(circle at 50% 50%, #F04E6E 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #F472B6 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
+.b2 { background-color: #FFF7E6; background-image: radial-gradient(circle at 50% 50%, #E88F1E 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #0EB5A6 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
+.b3 { background-color: #EFF6FF; background-image: radial-gradient(circle at 50% 50%, #3A7BD5 0 30%, transparent 31%), radial-gradient(circle at 50% 50%, #6C4DF0 0 30%, transparent 31%); background-size: 11px 11px; background-position: 0 0, 5.5px 5.5px; }
 
 /* ===== 多色错误标记（核心） =====
    三类错误各一色 + 编号圆 + 字形（实心点 / 空方框 / +）。图=位置，清单=详情，索引关系。 */
