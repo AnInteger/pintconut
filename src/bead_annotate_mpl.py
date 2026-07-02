@@ -45,6 +45,7 @@ cur_split = "train"
 _press = [None]   # (display_x, display_y, button) at press — tell click from drag
 mouse = [0, 0]
 _last_draw = [0.0]   # on_move 限频用(避免 draw_idle 阻塞按键)
+_pred_model = [None]  # YOLO 预填模型(lazy 加载)
 
 
 preview_artists = []   # 预览(中心十字+金黄虚线圆+r)单独管理, on_move 只更新它不全重画
@@ -152,6 +153,33 @@ def on_release(event):
     _do_label(p[2], int(event.xdata), int(event.ydata))
 
 
+def prefill():
+    """YOLO 预填检测框(按 f 触发, 主动学习: 模型预标 -> 人工改)"""
+    global pending
+    if img is None:
+        return
+    pending = None
+    if _pred_model[0] is None:
+        import glob as _glob
+        cands = sorted(_glob.glob("runs/detect/**/weights/best.pt", recursive=True),
+                       key=os.path.getmtime, reverse=True)
+        if not cands:
+            print("没找到 best.pt, 先训练一个")
+            return
+        from ultralytics import YOLO as _YOLO
+        print(f"预填加载模型: {cands[0]}")
+        _pred_model[0] = _YOLO(cands[0])
+    r = _pred_model[0](img, conf=0.08, iou=0.6, verbose=False)
+    n = 0
+    for b in r[0].boxes:
+        x1, y1, x2, y2 = b.xyxy[0].cpu().numpy()
+        boxes.append({"cx": int((x1 + x2) / 2), "cy": int((y1 + y2) / 2),
+                      "r": int((x2 - x1) / 2), "source": "auto", "warn": False})
+        n += 1
+    redraw()
+    print(f"预填 {n} 颗 (右键删误报, u撤销, 点中心+豆缘补漏, s保存)")
+
+
 def on_move(event):
     if event.inaxes is ax and event.xdata is not None:
         mouse[0], mouse[1] = event.xdata, event.ydata
@@ -181,6 +209,8 @@ def on_key(event):
         boxes.clear()
         pending = None
         redraw()
+    elif event.key == "f":
+        prefill()
     elif event.key == "s" and boxes:
         xyxy = [{"xyxy": [b["cx"] - b["r"], b["cy"] - b["r"], b["cx"] + b["r"], b["cy"] + b["r"]],
                  "cx": b["cx"], "cy": b["cy"], "width": 2 * b["r"], "height": 2 * b["r"]}
