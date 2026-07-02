@@ -61,7 +61,7 @@ def _draw_preview():
     preview_artists.clear()
     if pending is None:
         return
-    cx, cy = pending
+    cx, cy = pending[0], pending[1]
     pr = int(((cx - mouse[0]) ** 2 + (cy - mouse[1]) ** 2) ** 0.5)
     preview_artists.append(ax.add_patch(Circle((cx, cy), pr, fill=False, color="gold", lw=1, ls="--")))
     preview_artists.extend(ax.plot([cx], [cy], "+", color="red", ms=14, mew=2))
@@ -118,16 +118,28 @@ def load_current():
 
 
 def _do_label(button, x, y):
-    """纯手动: 左键1=点豆中心, 左键2=点豆缘(半径=距离), 右键=删最近。"""
+    """左键1=点中心(新建)/点已有框内(选中改); 左键2=点豆缘定半径; 右键=删最近。"""
     global pending
     if button == 1:
         if pending is None:
-            pending = (x, y)                       # 中心
+            hit = None
+            for i, b in enumerate(boxes):           # 落在已有框内 -> 选中改半径
+                if (b["cx"] - x) ** 2 + (b["cy"] - y) ** 2 < b["r"] * b["r"]:
+                    hit = i
+                    break
+            if hit is not None:
+                b = boxes[hit]
+                pending = (b["cx"], b["cy"], hit)
+            else:
+                pending = (x, y, None)              # 新建
         else:
-            cx, cy = pending
+            cx, cy, idx = pending
             r = int(((cx - x) ** 2 + (cy - y) ** 2) ** 0.5)
             if r >= 3:
-                boxes.append({"cx": cx, "cy": cy, "r": r, "source": "manual", "warn": False})
+                if idx is None:
+                    boxes.append({"cx": cx, "cy": cy, "r": r, "source": "manual", "warn": False})
+                else:
+                    boxes[idx].update(r=r, source="manual")   # 改选中框半径
             pending = None
     elif button == 3 and boxes:
         i = min(range(len(boxes)),
@@ -159,6 +171,7 @@ def prefill():
     if img is None:
         return
     pending = None
+    boxes.clear()                                   # 清空重预填(避免和已有重复)
     if _pred_model[0] is None:
         import glob as _glob
         cands = sorted(_glob.glob("runs/detect/**/weights/best.pt", recursive=True),
