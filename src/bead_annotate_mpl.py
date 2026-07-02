@@ -166,7 +166,7 @@ def on_release(event):
 
 
 def prefill():
-    """YOLO 预填检测框(按 f 触发, 主动学习: 模型预标 -> 人工改)"""
+    """SAHI 切图预填(按 f 触发, 密集小豆子切图放大检出)"""
     global pending
     if img is None:
         return
@@ -179,18 +179,22 @@ def prefill():
         if not cands:
             print("没找到 best.pt, 先训练一个")
             return
-        from ultralytics import YOLO as _YOLO
-        print(f"预填加载模型: {cands[0]}")
-        _pred_model[0] = _YOLO(cands[0])
-    r = _pred_model[0](img, conf=0.08, iou=0.6, verbose=False)
+        from sahi import AutoDetectionModel
+        print(f"SAHI 预填加载模型: {cands[0]}")
+        _pred_model[0] = AutoDetectionModel.from_pretrained(
+            model_type="ultralytics", model_path=cands[0],
+            confidence_threshold=0.08, device="cuda:0", image_size=1280)
+    from sahi.predict import get_sliced_prediction
+    result = get_sliced_prediction(img, _pred_model[0], slice_height=512, slice_width=512,
+                                   overlap_height_ratio=0.2, overlap_width_ratio=0.2, verbose=0)
     n = 0
-    for b in r[0].boxes:
-        x1, y1, x2, y2 = b.xyxy[0].cpu().numpy()
+    for pred in result.object_prediction_list:
+        x1, y1, x2, y2 = pred.bbox.minx, pred.bbox.miny, pred.bbox.maxx, pred.bbox.maxy
         boxes.append({"cx": int((x1 + x2) / 2), "cy": int((y1 + y2) / 2),
                       "r": int((x2 - x1) / 2), "source": "auto", "warn": False})
         n += 1
     redraw()
-    print(f"预填 {n} 颗 (右键删误报, u撤销, 点中心+豆缘补漏, s保存)")
+    print(f"SAHI 切图预填 {n} 颗 (右键删误报, u撤销, 点中心+豆缘补漏, s保存)")
 
 
 def on_move(event):
