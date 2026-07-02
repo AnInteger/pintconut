@@ -8,13 +8,14 @@
 <style>
   .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 64px; }
   .head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-  .head h1 { font-size: 28px; font-weight: 900; letter-spacing: -.5px; }
+  .head h1 { font-size: 28px; font-weight: 900; letter-spacing: -.5px; font-family: 'Space Grotesk','Inter',sans-serif; }
   .sub { color: var(--muted); font-size: 14px; margin: 8px 0 32px; line-height: 1.6; }
   .grp-h { display:flex; align-items:center; gap:10px; font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--brand-a); text-transform: uppercase; margin: 30px 0 14px; }
   .grp-h .line { flex:1; height:1px; background: var(--line); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
   a.card { display:block; background: var(--bg-surface); border-radius: var(--r-card); padding: 16px 18px; text-decoration:none; color: var(--ink); box-shadow: 0 6px 18px rgba(26,16,51,.06); transition: transform .15s, box-shadow .15s; }
-  a.card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(124,58,237,.16); }
+  a.card h3 { font-family: 'Space Grotesk','Inter',sans-serif; }
+  a.card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(108,77,240,.16); }
   a.card .n { font-size: 11px; font-weight: 800; color: var(--brand-a); letter-spacing: 1px; }
   a.card h3 { font-size: 16px; font-weight: 800; margin: 6px 0 4px; }
   a.card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
@@ -26,7 +27,7 @@
 <body>
 <div class="wrap">
   <div class="head"><div class="brand-mark" style="width:34px;height:34px;border-radius:10px"></div><h1>Pintcount 原型</h1></div>
-  <div class="sub">基于 v1.4 PRD 的静态原型。点击进入各屏；核心魔法流建议按顺序走一遍。<br>多色错误标记：颜色错=红 · 空缺=蓝 · 多余=橙。</div>
+  <div class="sub">基于 v1.4 PRD 的静态原型（v3 设计系统）。点击进入各屏；核心魔法流建议按顺序走一遍。<br>多色错误标记：颜色错=rose · 空缺=sapphire · 多余=amber。</div>
 
   <div class="legend">
     <span><span class="sw" style="background:var(--err-color)"></span>颜色错</span>
