@@ -3,55 +3,75 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>分享卡片 · Pintcount 原型</title>
+<title>分享 · Pintcount 原型</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .card { background: var(--bg-surface); border-radius: var(--r-card); box-shadow: var(--sh-card); overflow: hidden; }
-  .share-row { display: flex; justify-content: space-around; padding: 18px 0 6px; }
-  .share-row .item { text-align: center; color: var(--muted); font-size: 12px; font-weight: 700; }
-  .share-row .ic { width: 52px; height: 52px; border-radius: 16px; background: var(--bg-soft); margin: 0 auto 8px; display:flex;align-items:center;justify-content:center; color: var(--brand-a); font-weight:800; font-size:18px; }
+  /* 背景屏（结果页）虚化 + 底部抽屉（原生分享表单） */
+  .behind { position: absolute; inset: 46px 0 0; padding: 14px 20px 0; z-index: 1; }
+  .scrim { position: absolute; inset: 46px 0 0; background: rgba(26,19,32,.42); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); z-index: 5; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg-surface); border-radius: 26px 26px 0 0; padding: 10px 20px 14px; box-shadow: 0 -14px 34px rgba(0,0,0,.20); z-index: 10; animation: sheet-up .34s cubic-bezier(.2,.8,.2,1); }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce){ .sheet { animation: none; } }
+  .grabber { width: 40px; height: 5px; border-radius: 3px; background: #D6D0DE; margin: 4px auto 14px; }
+  .sheet-h { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; margin-bottom: 12px; letter-spacing: .3px; }
+  .sheet-card { display: flex; align-items: center; gap: 12px; background: var(--bg-soft); border-radius: 16px; padding: 10px 12px; margin-bottom: 18px; }
+  .sheet-card .thumb { width: 56px; height: 56px; border-radius: 12px; flex-shrink: 0; }
+  .sheet-card .info { flex: 1; min-width: 0; }
+  .sheet-card .info .t { font-size: 14px; font-weight: 800; color: var(--ink); }
+  .sheet-card .info .m { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .sheet-card .info .wm { font-size: 10.5px; font-weight: 800; color: var(--brand-a); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+  .sheet-card .info .wm::before { content: ''; width: 9px; height: 9px; border-radius: 3px; background: var(--grad-brand); display: inline-block; }
+  .targets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 12px; }
+  .tg { text-align: center; text-decoration: none; color: var(--ink); }
+  .tg .ic { width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 7px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 19px; box-shadow: inset 0 -2px 4px rgba(0,0,0,.12); }
+  .tg .lb { font-size: 11px; font-weight: 600; }
+  .sheet-cancel { display: block; text-align: center; padding: 14px 0 4px; font-size: 16px; font-weight: 700; color: var(--muted); text-decoration: none; border-top: 1px solid var(--line); }
 </style>
 </head>
 <body>
 <div class="stage">
   <a class="back" href="index.html">← 返回索引</a>
-  <div class="cap"><span>分享卡片</span> · 品牌水印 · 核心流</div>
+  <div class="cap"><span>分享</span> · 抽屉式（原生分享表单）· 核心流</div>
 
   <div class="phone">
     <div class="status"><span class="t">9:41</span><span class="bat"><i><b></b></i></span></div>
 
-    <div class="nav">
-      <div class="left"><div class="chev"></div><div class="title">分享</div></div>
+    <!-- 背景屏：结果（通过），被遮罩虚化 -->
+    <div class="behind">
+      <div class="b1" style="height:200px;border-radius:var(--r-card);position:relative">
+        <div style="position:absolute;left:12px;bottom:12px" class="badge badge-ok lat">通过</div>
+      </div>
+      <div style="margin-top:18px;font-size:var(--fs-h1);font-weight:800">质检通过</div>
+      <div class="muted" style="font-size:13px;margin-top:4px"><span class="lat">0</span> 处错误，可以熨烫了</div>
     </div>
 
-    <div style="padding:12px 20px 0">
-      <!-- 卡片预览 -->
-      <div class="card">
-        <div class="b1" style="height:170px;position:relative">
-          <div style="position:absolute;left:12px;top:12px" class="badge badge-err"><span class="lat">4</span> 处错误</div>
-        </div>
-        <div style="padding:16px 18px 18px">
-          <div style="font-size:var(--fs-h1);font-weight:800">草莓熊</div>
-          <div class="muted lat" style="font-size:var(--fs-caption);margin-top:4px">29 × 29 · Perler 色盘</div>
+    <!-- 遮罩 -->
+    <div class="scrim"></div>
 
-          <div style="margin-top:14px;display:flex;align-items:center;gap:9px;padding-top:14px;border-top:1px solid var(--line)">
-            <div class="brand-mark" style="width:22px;height:22px;border-radius:6px"></div>
-            <span style="font-size:12px;font-weight:800;color:var(--brand-a)">用 Pintcount 一键质检</span>
-          </div>
+    <!-- 原生分享抽屉（真机直接调系统 Share Sheet） -->
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div class="sheet-h">分享预览</div>
+
+      <div class="sheet-card">
+        <div class="thumb b1"></div>
+        <div class="info">
+          <div class="t">草莓熊</div>
+          <div class="m lat">29 × 29 · Perler 色盘</div>
+          <div class="wm">用 Pintcount 一键质检</div>
         </div>
       </div>
 
-      <div class="section-label" style="margin:24px 0 6px">分享到</div>
-      <div class="share-row">
-        <div class="item"><div class="ic">红</div>小红书</div>
-        <div class="item"><div class="ic">微</div>微信</div>
-        <div class="item"><div class="ic">⤓</div>保存</div>
-        <div class="item"><div class="ic">···</div>更多</div>
+      <div class="targets">
+        <a class="tg"><span class="ic" style="background:#F04E6E">红</span><span class="lb">小红书</span></a>
+        <a class="tg"><span class="ic" style="background:#0EB5A6">微</span><span class="lb">微信</span></a>
+        <a class="tg"><span class="ic" style="background:#6C4DF0">↓</span><span class="lb">保存</span></a>
+        <a class="tg"><span class="ic" style="background:#E88F1E">⧉</span><span class="lb">复制</span></a>
+        <a class="tg"><span class="ic" style="background:var(--ink)">⋯</span><span class="lb">更多</span></a>
       </div>
-      <div class="muted" style="font-size:11px;text-align:center;margin:10px 0 24px">实际调用系统分享表单</div>
-    </div>
 
-    <div class="home-bar" style="margin-top:auto"></div>
+      <a class="sheet-cancel" href="results-pass.html">取消</a>
+    </div>
   </div>
 </div>
 </body>
