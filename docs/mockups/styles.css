@@ -34,7 +34,7 @@
   --fs-caption: 12px;
 
   /* 圆角 */
-  --r-btn: 16px;
+  --r-btn: 20px;
   --r-card: 20px;
   --r-chip: 10px;
 
@@ -97,14 +97,15 @@ body {
 .tab.on .ic-settings::after { border-color: var(--brand-a); }
 
 /* ===== 按钮 ===== */
-.btn { display: flex; align-items: center; justify-content: center; border-radius: var(--r-btn); height: 54px; font-size: var(--fs-title); font-weight: 800; text-decoration: none; }
-.btn-primary { background: var(--grad-brand); color: #fff; box-shadow: var(--sh-cta); }
+.btn { display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: var(--r-btn); height: 58px; font-size: var(--fs-title); font-weight: 800; text-decoration: none; }
+.btn-primary { background: var(--brand-a); color: #fff; box-shadow: var(--sh-cta); }
 .btn-ink { background: var(--ink); color: #fff; }
 .btn-text { height: 44px; color: var(--muted); font-size: var(--fs-body); font-weight: 700; }
 .chev-r { width: 9px; height: 9px; border-right: 2.5px solid #fff; border-top: 2.5px solid #fff; transform: rotate(45deg); display: inline-block; margin-left: 8px; }
+.arrow { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.22); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: inset 0 1px 2px rgba(255,255,255,.45), inset 0 -1px 2px rgba(0,0,0,.12); flex-shrink: 0; }
 
 /* 胶囊 */
-.pill { display: inline-flex; align-items: center; background: var(--grad-brand); color: #fff; font-size: 14px; font-weight: 800; padding: 7px 14px; border-radius: 999px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 800; padding: 7px 14px; border-radius: 999px; }
 .pill-success { background: var(--success); }
 
 /* 色块小徽章 */
