@@ -62,7 +62,7 @@ body {
 
 /* ===== 手机框 ===== */
 .phone {
-  width: 390px; background: var(--bg-app); border-radius: 46px; overflow: hidden;
+  width: 402px; background: var(--bg-app); border-radius: 55px; overflow: hidden;
   box-shadow: var(--sh-card); position: relative;
 }
 .status { height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
