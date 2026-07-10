@@ -72,7 +72,7 @@ YOLO11 升级、训练调参、生产接 YOLO 都是拿到可用 baseline 之后
 | 改 | `src/bead_annotate_mpl.py`（性能 P1/P2/P3 + B1/B2） |
 | 改 | `training/bead_dataset/data.yaml`（修相对路径） |
 | 改 | `training/bead_train.py`（imgsz/epochs 默认值或文档化推荐参数） |
-| 删 | `src/bead_label_service.py` 死代码 + `tests/test_bead_label_service.py` 对应用例（保留 `export_yolo`） |
+| 删 | `src/bead_label_service.py` 整文件 + `tests/test_bead_label_service.py`（`export_yolo` 内联进 `bead_annotate_mpl.py`） |
 
 ## 5. 风险与对策
 

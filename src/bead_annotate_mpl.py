@@ -33,8 +33,20 @@ for _k in ("save", "pan", "zoom", "quit", "back", "forward", "grid", "grid_minor
            "fullscreen", "home", "yscale", "xscale", "copy"):
     plt.rcParams[f"keymap.{_k}"] = []
 
-from src.bead_label_service import export_yolo
+from src.bead_prelabel import save_yolo_boxes
 from src.paths import DATASET_DIR
+
+
+def export_yolo(image, boxes, name, images_dir, labels_dir):
+    """Write image (jpg) + YOLO detection labels (single class 0). Returns (img_path, label_path, n)."""
+    os.makedirs(images_dir, exist_ok=True)
+    os.makedirs(labels_dir, exist_ok=True)
+    h, w = image.shape[:2]
+    img_path = os.path.join(images_dir, name + ".jpg")
+    cv2.imwrite(img_path, image)
+    label_path = os.path.join(labels_dir, name + ".txt")
+    save_yolo_boxes(boxes, w, h, label_path)
+    return img_path, label_path, len(boxes)
 
 img = name = ax = fig = None
 boxes = []        # [{cx, cy, r, source, warn}]
