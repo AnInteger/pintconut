@@ -6,7 +6,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Pintconut** (拼豆差异检测器) — compares photos of completed bead board artwork against blueprint designs, automatically detecting and annotating misplaced beads using computer vision.
 
-Pipeline: Photo + Blueprint → Bead Detection (HoughCircles) → Grid Fitting → Color Matching (LAB space, 221-color palette) → Diff Annotation
+Pipeline: Photo + Blueprint → Bead Detection (YOLO, single-class "bead") → Grid Fitting → Color Matching (LAB space, 221-color palette) → Diff Annotation
+
+> **Current state**: production `cli.py` still uses HoughCircles (`BeadGridFitter` without a detector); wiring the YOLO `BeadDetector` into production is planned (see spec 2026-07-10).
+
+---
+
+## 项目宪法（关键决策与已验证结论）
+
+> brainstorming 讨论确认，2026-07-10。避免重复踩坑。
+
+### 检测路线
+- **生产目标 = YOLO 目标检测**（单类 bead）。`BeadDetector`（`src/bead_detect.py`）是计划中的生产检测器——**有测试，勿当死代码删**。
+- YOLO 模型目前只用在工具：`bead_tune.py`（调 conf/iou）、`bead_annotate_mpl.py` 的 `f` 键 SAHI 预填。
+
+### 已验证无效，不要再试
+以下"自动检测辅助标注/检测"路线在本项目照片（光照/反光/透视复杂）上实测不灵：
+- 几何网格拟合当检测器（HoughCircles 找豆 + lattice 编号）
+- 四角网格批量生成标注框
+- 梯度（Sobel）自动定半径
+- HoughCircles 预标 + 空洞补洞
+
+### 精度天花板 = 数据
+- `board30` 训练日志：val mAP 全程 = 0、`cls_loss` 多次飙到 35-87 → 模型没学进去 + 训练不稳定。
+- 根因在数据质与量；量被标注速度锁死；速度被工具卡顿锁死。
+- 杠杆链：修工具性能 → 标得快 → 产可信数据 → 诊断/修 mAP=0 → 再谈 YOLO11/调参/接线。
+
+### 评测准则
+- 在**可信 GT** 上用标准 **mAP50**（mAP50-95 参考）。
+- **不引入自定义计数指标**（曾提议用 |预测数−真实数| 绕 GT 噪声，判定 hack，否决）。
+- 正路是产可信 GT（完整/一致/贴边标注），让标准 mAP 本身可信。
+
+### 训练准则（有 GPU）
+- `imgsz 1280`、`epochs 300` + `patience`、`single_cls=True`、cos-lr、`close_mosaic` 开。
+- 盯 `cls_loss`：飙到几十 = 发散（查 lr / 0 实例 batch / 标签格式）。
+
+### 数据路径准则
+- `data.yaml` 用**相对路径**，勿写死绝对路径（曾因仓库迁移失效）。
 
 ## Common Commands
 
